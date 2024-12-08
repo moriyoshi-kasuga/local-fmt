@@ -1,0 +1,17 @@
+[files]
+extend-exclude = [
+    "Cargo.lock",
+    "*.svg",
+    "*.png",
+    "*.jpg",
+    "*.gif",
+    "*.ico",
+    "*.exe",
+]
+ignore-hidden = true
+ignore-vcs = true
+
+[default]
+check-filename = true
+check-file = true
+locale = "en-us"
