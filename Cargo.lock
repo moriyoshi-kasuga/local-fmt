@@ -28,11 +28,11 @@ dependencies = [
 name = "local-fmt"
 version = "0.1.0"
 dependencies = [
- "local-fmt-derive",
+ "local-fmt-macros",
 ]
 
 [[package]]
-name = "local-fmt-derive"
+name = "local-fmt-macros"
 version = "0.1.0"
 dependencies = [
  "proc-macro2",

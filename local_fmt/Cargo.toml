@@ -11,13 +11,13 @@ categories.workspace = true
 keywords.workspace = true
 
 [dependencies]
-local-fmt-derive = { version = "^0", path = "../local_fmt_derive", optional = true }
+local-fmt-macros = { version = "^0", path = "../local_fmt_macros", optional = true }
 
 [features]
 default = []
-derive = ["local-fmt-derive"]
-selected = ["local-fmt-derive?/selected"]
-global = ["local-fmt-derive?/global"]
+macros = ["local-fmt-macros"]
+selected = ["local-fmt-macros?/selected"]
+global = ["local-fmt-macros?/global"]
 
 [lib]
 name = "local_fmt"

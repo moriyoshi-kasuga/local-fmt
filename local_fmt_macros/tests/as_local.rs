@@ -1,4 +1,4 @@
-use local_fmt_derive::AsLocal;
+use local_fmt_macros::AsLocal;
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone, Copy, AsLocal)]
 pub enum Lang {

@@ -1,9 +1,9 @@
 [package]
-name = "local-fmt-derive"
+name = "local-fmt-macros"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
-description = "derive macro implementation for local-fmt crate"
+description = "macro implementation for local-fmt crate"
 authors.workspace = true
 repository.workspace = true
 license.workspace = true

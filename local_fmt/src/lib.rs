@@ -2,6 +2,9 @@ use core::str;
 use std::collections::HashMap;
 use std::hash::Hash;
 
+#[cfg(feature = "macros")]
+pub use local_fmt_macros as macros;
+
 #[derive(Debug, Clone)]
 pub struct LocalFmt<Lang, Key> {
     locales: HashMap<Lang, HashMap<Key, &'static str>>,
@@ -12,7 +15,9 @@ pub struct LocalFmt<Lang, Key> {
     global: fn() -> Lang,
 }
 
-impl<Lang: std::fmt::Debug + Default + Hash + Eq + Copy, Key: Hash + Eq> LocalFmt<Lang, Key> {
+impl<Lang: std::fmt::Debug + Default + Hash + Eq + Copy, Key: Hash + Eq + Copy>
+    LocalFmt<Lang, Key>
+{
     #[cfg(not(any(feature = "selected", feature = "global")))]
     pub fn new(fallback: Lang) -> Self {
         Self {
@@ -56,6 +61,12 @@ impl<Lang: std::fmt::Debug + Default + Hash + Eq + Copy, Key: Hash + Eq> LocalFm
 
     pub fn add_lang(&mut self, lang: Lang, locale: HashMap<Key, &'static str>) {
         self.locales.insert(lang, locale);
+    }
+
+    pub fn add_langs_of_key(&mut self, key: Key, locale: HashMap<Lang, &'static str>) {
+        for (lang, value) in locale {
+            self.add_locale_fmt(lang, key, value);
+        }
     }
 
     #[cfg(feature = "global")]

@@ -1,7 +1,9 @@
-use syn::{Expr, ExprPath, Ident, LitStr, Path, Token};
+use syn::{Expr, ExprPath, Ident, LitStr, Path, Token, Visibility};
 
+#[derive(Clone)]
 pub(crate) struct Args {
     pub locales_path: String,
+    pub vis: Visibility,
     pub ident: Ident,
     pub lang: Ident,
     pub key: Ident,
@@ -14,6 +16,7 @@ pub(crate) struct Args {
 impl syn::parse::Parse for Args {
     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
         let mut locales_path = None;
+        let mut vis = None;
         let mut ident = None;
         let mut lang = None;
         let mut key = None;
@@ -34,6 +37,18 @@ impl syn::parse::Parse for Args {
 
                     let lit_str = input.parse::<LitStr>()?;
                     locales_path = Some(lit_str.value());
+                }
+                path if path.is_ident("visibility") => {
+                    if vis.is_some() {
+                        return Err(syn::Error::new_spanned(
+                            path,
+                            "duplicate visibility attribute",
+                        ));
+                    }
+                    let _ = input.parse::<Token![=]>()?;
+
+                    let v = input.parse::<Visibility>()?;
+                    vis = Some(v);
                 }
                 path if path.is_ident("ident") => {
                     if ident.is_some() {
@@ -91,6 +106,7 @@ impl syn::parse::Parse for Args {
 
         Ok(Self {
             locales_path: locales_path.unwrap_or("locales".to_string()),
+            vis: vis.unwrap_or(Visibility::Inherited),
             ident: ident.ok_or_else(|| syn::Error::new(input.span(), "no ident attribute"))?,
             lang: lang.ok_or_else(|| syn::Error::new(input.span(), "no lang attribute"))?,
             key: key.ok_or_else(|| syn::Error::new(input.span(), "no key attribute"))?,
