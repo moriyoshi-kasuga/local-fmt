@@ -1,9 +1,9 @@
 use proc_macro2::TokenStream;
 
-pub(crate) fn derive_as_local(input: syn::DeriveInput) -> syn::Result<TokenStream> {
+pub(crate) fn derive_convert_str(input: syn::DeriveInput) -> syn::Result<TokenStream> {
     match &input.data {
         syn::Data::Enum(syn::DataEnum { variants, .. }) => {
-            derive_as_local_internal(&input, variants.iter())
+            derive_convert_str_internal(&input, variants.iter())
         }
         _ => Err(syn::Error::new_spanned(
             input,
@@ -12,7 +12,7 @@ pub(crate) fn derive_as_local(input: syn::DeriveInput) -> syn::Result<TokenStrea
     }
 }
 
-fn derive_as_local_internal<'a>(
+fn derive_convert_str_internal<'a>(
     input: &syn::DeriveInput,
     variatns: impl Iterator<Item = &'a syn::Variant>,
 ) -> syn::Result<TokenStream> {

@@ -1,5 +1,5 @@
 pub(crate) mod args;
-pub(crate) mod as_locale;
+pub(crate) mod convert_str;
 pub(crate) mod gen;
 
 use args::Args;
@@ -19,9 +19,9 @@ pub fn def_local_fmt(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
         .into()
 }
 
-#[proc_macro_derive(AsLocal)]
-pub fn derive_as_local(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
-    as_locale::derive_as_local(syn::parse_macro_input!(input as syn::DeriveInput))
+#[proc_macro_derive(ConvertStr)]
+pub fn derive_convert_str(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    convert_str::derive_convert_str(syn::parse_macro_input!(input as syn::DeriveInput))
         .unwrap_or_else(syn::Error::into_compile_error)
         .into()
 }
