@@ -7,17 +7,15 @@ pub use local_fmt_macros as macros;
 
 #[derive(Debug, Clone)]
 pub struct LocalFmt<Lang, Key> {
-    locales: HashMap<Lang, HashMap<Key, &'static str>>,
-    fallback: Lang,
+    pub locales: HashMap<Lang, HashMap<Key, &'static str>>,
+    pub fallback: Lang,
     #[cfg(feature = "selected")]
-    selected: Lang,
+    pub selected: Lang,
     #[cfg(feature = "global")]
-    global: fn() -> Lang,
+    pub global: fn() -> Lang,
 }
 
-impl<Lang: std::fmt::Debug + Default + Hash + Eq + Copy, Key: Hash + Eq + Copy>
-    LocalFmt<Lang, Key>
-{
+impl<Lang: std::fmt::Debug + Hash + Eq + Copy, Key: Hash + Eq + Copy> LocalFmt<Lang, Key> {
     #[cfg(not(any(feature = "selected", feature = "global")))]
     pub fn new(fallback: Lang) -> Self {
         Self {
@@ -54,15 +52,18 @@ impl<Lang: std::fmt::Debug + Default + Hash + Eq + Copy, Key: Hash + Eq + Copy>
         }
     }
 
+    #[inline]
     pub fn add_locale_fmt(&mut self, lang: Lang, key: Key, value: &'static str) {
         let locale = self.locales.entry(lang).or_default();
         locale.insert(key, value);
     }
 
+    #[inline]
     pub fn add_lang(&mut self, lang: Lang, locale: HashMap<Key, &'static str>) {
         self.locales.insert(lang, locale);
     }
 
+    #[inline]
     pub fn add_langs_of_key(&mut self, key: Key, locale: HashMap<Lang, &'static str>) {
         for (lang, value) in locale {
             self.add_locale_fmt(lang, key, value);
@@ -70,11 +71,13 @@ impl<Lang: std::fmt::Debug + Default + Hash + Eq + Copy, Key: Hash + Eq + Copy>
     }
 
     #[cfg(feature = "global")]
+    #[inline]
     pub fn f(&self, key: Key, args: &[(&str, &str)]) -> String {
         self.format((self.global)(), key, args)
     }
 
     #[cfg(feature = "selected")]
+    #[inline]
     pub fn fmt(&self, key: Key, args: &[(&str, &str)]) -> String {
         self.format(self.selected, key, args)
     }

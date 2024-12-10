@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use proc_macro2::{Span, TokenStream};
 use quote::{quote, ToTokens};
-use toml::Table;
+use toml::{Table, Value};
 
 use crate::args::Args;
 
@@ -15,27 +15,23 @@ macro_rules! unwrap_err {
     };
 }
 
-macro_rules! unwrap_err_str {
-    ($e:expr, $s:literal) => {
-        match $e {
-            Ok(v) => v,
-            Err(_) => return Err(syn::Error::new(Span::call_site(), $s)),
-        }
+macro_rules! gen_err_with_str {
+    ($s:literal) => {
+        Err(syn::Error::new(Span::call_site(), $s))
+    };
+    ($s:literal, $($arg:tt),+) => {
+        Err(syn::Error::new(Span::call_site(), format!($s, $($arg),+)))
     };
 }
 
-pub(crate) fn gen_code(path: PathBuf, args: Args) -> syn::Result<TokenStream> {
-    let Args {
-        locales_path: _,
-        vis,
-        ident,
-        lang,
-        key,
-        #[cfg(feature = "selected")]
-        selected,
-        #[cfg(feature = "global")]
-        global,
-    } = args.clone();
+pub(crate) fn gen_code(macro_args: Args) -> syn::Result<TokenStream> {
+    let cargo_dir = unwrap_err!(std::env::var("CARGO_MANIFEST_DIR"));
+    let path = std::path::PathBuf::from(cargo_dir).join(&macro_args.locales_path);
+
+    let vis = macro_args.vis.clone();
+    let ident = macro_args.ident.clone();
+    let lang = macro_args.lang.clone();
+    let key = macro_args.key.clone();
 
     // local_fmt::LocalFmt<Lang, Key>::new()
     let init: syn::ExprCall = {
@@ -77,14 +73,28 @@ pub(crate) fn gen_code(path: PathBuf, args: Args) -> syn::Result<TokenStream> {
             paren_token: syn::token::Paren(Span::call_site()),
             args: Default::default(),
         };
-        call.args.push(unwrap_err_str!(
-            syn::parse_str("Default::default()"),
-            "definition error please report issue"
-        ));
+        call.args.push(match macro_args.fallback {
+            Some(ref expr) => expr.clone(),
+            None => syn::Expr::Call(syn::ExprCall {
+                attrs: Vec::new(),
+                func: Box::new(syn::Expr::Path(syn::ExprPath {
+                    attrs: Vec::new(),
+                    qself: None,
+                    path: {
+                        let mut p = syn::Path::from(syn::Ident::new("Default", Span::call_site()));
+                        p.segments
+                            .push(syn::Ident::new("default", Span::call_site()).into());
+                        p
+                    },
+                })),
+                paren_token: syn::token::Paren(Span::call_site()),
+                args: Default::default(),
+            }),
+        });
         #[cfg(feature = "selected")]
-        call.args.push(selected);
+        call.args.push(macro_args.selected.clone());
         #[cfg(feature = "global")]
-        call.args.push(syn::Expr::Path(global));
+        call.args.push(macro_args.global.clone());
 
         call
     };
@@ -94,9 +104,9 @@ pub(crate) fn gen_code(path: PathBuf, args: Args) -> syn::Result<TokenStream> {
     let gen = if unwrap_err!(std::fs::exists(&app)) {
         let s = unwrap_err!(std::fs::read_to_string(&app));
         let table = unwrap_err!(s.parse::<Table>());
-        gen_code_of_app(table, args)?
+        gen_code_of_app(table, macro_args)?
     } else {
-        gen_code_of_table(path, args)?
+        gen_code_of_table(path, macro_args)?
     };
 
     let token = quote! {
@@ -110,20 +120,75 @@ pub(crate) fn gen_code(path: PathBuf, args: Args) -> syn::Result<TokenStream> {
     Ok(token)
 }
 
-fn gen_code_of_app(table: toml::Table, args: Args) -> syn::Result<TokenStream> {
+fn gen_code_of_app(table: Table, args: Args) -> syn::Result<TokenStream> {
     let Args {
         locales_path: _,
         vis,
         ident,
         lang,
         key,
+        fallback: _,
         #[cfg(feature = "selected")]
         selected,
         #[cfg(feature = "global")]
         global,
     } = args;
 
-    let gen = quote! {};
+    fn def_local(
+        def_token: &mut TokenStream,
+        path: Vec<&str>,
+        last: &str,
+        table: &Table,
+    ) -> syn::Result<()> {
+        let is_table = table.values().all(Value::is_table);
+        let is_string = table.values().all(Value::is_str);
+
+        match (is_table, is_string) {
+            (true, true) => return gen_err_with_str!("key {} is both table and string", last),
+            (false, false) => return gen_err_with_str!("key {} is not table and not string", last),
+            (true, false) => {
+                let mut table = table.iter();
+                for (key, value) in table {
+                    let Some(table) = value.as_table() else {
+                        return gen_err_with_str!("key {} is not table", key);
+                    };
+                    def_local(
+                        def_token,
+                        {
+                            let mut path = path.clone();
+                            path.push(last);
+                            path
+                        },
+                        &key,
+                        table,
+                    )?;
+                }
+            }
+            (false, true) => {}
+        }
+
+        Ok(())
+    }
+
+    let mut def_token = TokenStream::new();
+
+    for (key, value) in &table {
+        let Some(table) = value.as_table() else {
+            return gen_err_with_str!("key {} is not table", key);
+        };
+        def_local(&mut def_token, vec![], &key, table)?;
+    }
+
+    let gen = quote! {
+        let fallback = fmt.fallback;
+        macro_rules! is_definitioned_fallback {
+            ($key:expr, $locales:expr) => {
+                assert!(locales.contains_key(fallback), "key is not found: {} in fallback locale", $key);
+                fmt.add_langs_of_key($key, $locale);
+            }
+        }
+        #def_token
+    };
 
     Ok(gen)
 }
@@ -135,6 +200,7 @@ fn gen_code_of_table(path: PathBuf, args: Args) -> syn::Result<TokenStream> {
         ident,
         lang,
         key,
+        fallback: _,
         #[cfg(feature = "selected")]
         selected,
         #[cfg(feature = "global")]
