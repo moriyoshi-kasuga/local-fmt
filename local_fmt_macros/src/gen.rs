@@ -129,10 +129,8 @@ pub(crate) fn gen_code(macro_args: Args) -> syn::Result<TokenStream> {
 fn gen_code_of_app(table: Table, args: Args) -> syn::Result<TokenStream> {
     let Args {
         locales_path,
-        // vis,
-        // ident,
-        // lang,
-        // key,
+        lang,
+        key,
         ..
     } = args;
 
@@ -152,11 +150,12 @@ fn gen_code_of_app(table: Table, args: Args) -> syn::Result<TokenStream> {
                 let path = path.join("_");
                 let token = quote! {
                     {
-                        let mut locales = HashMap::new();
+                        let mut locales = HashMap::with_capacity(capacity);
+                        let path = #path.try_into().unwrap();
                         #(
-                            locales.insert(#langs.try_into().unwrap(), #strings);
+                            locales.insert(#langs.try_into().map_err(|err| format!("happen at \"{}\": {}", to_static_str!(path), err)).unwrap(), #strings);
                         )*
-                        is_definitioned_fallback!(#path, locales);
+                        is_definitioned!(path, locales);
                     }
                 };
                 def_token.extend(token);
@@ -187,13 +186,35 @@ fn gen_code_of_app(table: Table, args: Args) -> syn::Result<TokenStream> {
     }
 
     let gen = quote! {
-        macro_rules! is_definitioned_fallback {
-            ($key:expr, $locales:expr) => {
-                assert!($locales.contains_key(&fmt.fallback), "key is not found: {} in fallback locale", $key);
-                fmt.add_langs_of_key($key.try_into().unwrap(), $locales);
+        let langs = <#lang as local_fmt::EnumIter>::iter();
+        let capacity = langs.len();
+        let keys = <#key as local_fmt::EnumIter>::iter();
+
+        let mut def_keys = std::collections::HashSet::<#key>::new();
+
+        macro_rules! to_static_str {
+            ($e:expr) => {
+                Into::<&'static str>::into($e)
             }
         }
+
+        macro_rules! is_definitioned {
+            ($key:expr, $locales:expr) => {
+                assert_eq!(capacity, $locales.len(), "Not all locales are defined for key \"{}\"", to_static_str!($key));
+                for lang in langs.clone() {
+                    assert!($locales.contains_key(lang), "Not all locales are defined for key \"{}\" and lang \"{}\"", to_static_str!($key), to_static_str!(*lang));
+                }
+                assert!(def_keys.insert($key), "Key \"{}\" is already defined", to_static_str!($key));
+                fmt.add_langs_of_key($key, $locales);
+            }
+        }
+
         #def_token
+
+        assert_eq!(keys.len(), def_keys.len(), "Not all keys are defined");
+        for key in keys {
+            assert!(def_keys.contains(key), "Key \"{}\" is not defined", to_static_str!(*key));
+        }
     };
 
     Ok(gen)

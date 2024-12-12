@@ -22,7 +22,10 @@ fn derive_enum_iter_internal<'a>(
 
     let token = quote::quote! {
         impl #impl_generics local_fmt::EnumIter for #ident #ty_generics #where_clause {
-            fn iter() -> impl Iterator<Item = Self> {
+            fn iter<'a>() -> core::slice::Iter<'a, Self> {
+                [#(Self::#field_name),*].iter()
+            }
+            fn into_iter() -> impl Iterator<Item = Self> {
                 [#(Self::#field_name),*].into_iter()
             }
         }

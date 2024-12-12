@@ -7,7 +7,8 @@ pub use local_fmt_macros as macros;
 
 #[cfg(feature = "macros")]
 pub trait EnumIter: Sized {
-    fn iter() -> impl Iterator<Item = Self>;
+    fn iter<'a>() -> core::slice::Iter<'a, Self>;
+    fn into_iter() -> impl Iterator<Item = Self>;
 }
 
 #[derive(Debug, Clone)]
