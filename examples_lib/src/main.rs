@@ -11,6 +11,7 @@ pub enum Lang {
 pub enum Key {
     Hello,
     Goodbye,
+    GameStart,
 }
 
 def_local_fmt!(ident = TRANSLATOR, lang = Lang, key = Key);
@@ -37,6 +38,7 @@ fn main() {
     };
 
     println!("{}", TRANSLATOR.format(lang, Key::Hello, &[]));
+    println!("{}", TRANSLATOR.format(lang, Key::GameStart, &[]));
     println!(
         "{}",
         TRANSLATOR.format(lang, Key::Goodbye, &[("human", &name)])

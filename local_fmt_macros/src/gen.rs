@@ -41,6 +41,7 @@ pub(crate) fn gen_code(macro_args: Args) -> syn::Result<TokenStream> {
 
     // local_fmt::LocalFmt<Lang, Key>::new()
     let init: syn::ExprCall = {
+        #[allow(unused_mut)]
         let mut call = syn::ExprCall {
             attrs: Vec::new(),
             func: Box::new(syn::Expr::Path(syn::ExprPath {
@@ -78,24 +79,6 @@ pub(crate) fn gen_code(macro_args: Args) -> syn::Result<TokenStream> {
             paren_token: syn::token::Paren(Span::call_site()),
             args: Default::default(),
         };
-        call.args.push(match macro_args.fallback {
-            Some(ref expr) => expr.clone(),
-            None => syn::Expr::Call(syn::ExprCall {
-                attrs: Vec::new(),
-                func: Box::new(syn::Expr::Path(syn::ExprPath {
-                    attrs: Vec::new(),
-                    qself: None,
-                    path: {
-                        let mut p = syn::Path::from(syn::Ident::new("Default", Span::call_site()));
-                        p.segments
-                            .push(syn::Ident::new("default", Span::call_site()).into());
-                        p
-                    },
-                })),
-                paren_token: syn::token::Paren(Span::call_site()),
-                args: Default::default(),
-            }),
-        });
         #[cfg(feature = "selected")]
         call.args.push(macro_args.selected.clone());
         #[cfg(feature = "global")]
@@ -153,7 +136,7 @@ fn gen_code_of_app(table: Table, args: Args) -> syn::Result<TokenStream> {
                         let mut locales = HashMap::with_capacity(capacity);
                         let path = #path.try_into().unwrap();
                         #(
-                            locales.insert(#langs.try_into().map_err(|err| format!("happen at \"{}\": {}", to_static_str!(path), err)).unwrap(), #strings);
+                            locales.insert(#langs.try_into().map_err(|err| format!("happen at \"{}\": {}", path, err)).unwrap(), #strings);
                         )*
                         is_definitioned!(path, locales);
                     }
@@ -192,19 +175,13 @@ fn gen_code_of_app(table: Table, args: Args) -> syn::Result<TokenStream> {
 
         let mut def_keys = std::collections::HashSet::<#key>::new();
 
-        macro_rules! to_static_str {
-            ($e:expr) => {
-                Into::<&'static str>::into($e)
-            }
-        }
-
         macro_rules! is_definitioned {
             ($key:expr, $locales:expr) => {
-                assert_eq!(capacity, $locales.len(), "Not all locales are defined for key \"{}\"", to_static_str!($key));
+                assert_eq!(capacity, $locales.len(), "Not all locales are defined for key \"{}\"", $key);
                 for lang in langs.clone() {
-                    assert!($locales.contains_key(lang), "Not all locales are defined for key \"{}\" and lang \"{}\"", to_static_str!($key), to_static_str!(*lang));
+                    assert!($locales.contains_key(lang), "Not all locales are defined for key \"{}\" and lang \"{}\"", $key, lang);
                 }
-                assert!(def_keys.insert($key), "Key \"{}\" is already defined", to_static_str!($key));
+                assert!(def_keys.insert($key), "Key \"{}\" is already defined", $key);
                 fmt.add_langs_of_key($key, $locales);
             }
         }
@@ -213,7 +190,7 @@ fn gen_code_of_app(table: Table, args: Args) -> syn::Result<TokenStream> {
 
         assert_eq!(keys.len(), def_keys.len(), "Not all keys are defined");
         for key in keys {
-            assert!(def_keys.contains(key), "Key \"{}\" is not defined", to_static_str!(*key));
+            assert!(def_keys.contains(key), "Key \"{}\" is not defined", key);
         }
     };
 

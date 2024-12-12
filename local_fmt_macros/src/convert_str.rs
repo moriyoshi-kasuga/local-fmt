@@ -34,6 +34,12 @@ fn derive_convert_str_internal<'a>(
             }
         }
 
+        impl #impl_generics core::fmt::Display for #ident #ty_generics #where_clause {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                f.write_str(Into::<&'static str>::into(*self))
+            }
+        }
+
         impl #impl_generics core::str::FromStr for #ident #ty_generics #where_clause {
             type Err = String;
             

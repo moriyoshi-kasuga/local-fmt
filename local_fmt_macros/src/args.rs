@@ -1,4 +1,7 @@
-use syn::{Expr, Ident, LitStr, Path, Token, Visibility};
+use syn::{Ident, LitStr, Path, Token, Visibility};
+
+#[cfg(any(feature = "selected", feature = "global"))]
+use syn::Expr;
 
 #[derive(Clone)]
 pub(crate) struct Args {
@@ -7,7 +10,6 @@ pub(crate) struct Args {
     pub ident: Ident,
     pub lang: Ident,
     pub key: Ident,
-    pub fallback: Option<Expr>,
     #[cfg(feature = "selected")]
     pub selected: Expr,
     #[cfg(feature = "global")]
@@ -21,7 +23,6 @@ impl syn::parse::Parse for Args {
         let mut ident = None;
         let mut lang = None;
         let mut key = None;
-        let mut fallback = None;
 
         #[cfg(feature = "selected")]
         let mut selected = None;
@@ -84,18 +85,6 @@ impl syn::parse::Parse for Args {
                         let i = input.parse::<Ident>()?;
                         key = Some(i);
                     }
-                    path if path.is_ident("fallback") => {
-                        if fallback.is_some() {
-                            return Err(syn::Error::new_spanned(
-                                path,
-                                "duplicate fallback attribute",
-                            ));
-                        }
-                        let _ = input.parse::<Token![=]>()?;
-
-                        let expr = input.parse::<Expr>()?;
-                        fallback = Some(expr);
-                    }
                     #[cfg(feature = "selected")]
                     path if path.is_ident("selected") => {
                         if selected.is_some() {
@@ -137,7 +126,6 @@ impl syn::parse::Parse for Args {
             ident: ident.ok_or_else(|| syn::Error::new(input.span(), "no ident attribute"))?,
             lang: lang.ok_or_else(|| syn::Error::new(input.span(), "no lang attribute"))?,
             key: key.ok_or_else(|| syn::Error::new(input.span(), "no key attribute"))?,
-            fallback,
             #[cfg(feature = "selected")]
             selected: selected
                 .ok_or_else(|| syn::Error::new(input.span(), "no selected attribute"))?,

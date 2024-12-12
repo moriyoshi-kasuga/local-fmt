@@ -14,45 +14,44 @@ pub trait EnumIter: Sized {
 #[derive(Debug, Clone)]
 pub struct LocalFmt<Lang, Key> {
     pub locales: HashMap<Lang, HashMap<Key, &'static str>>,
-    pub fallback: Lang,
     #[cfg(feature = "selected")]
     pub selected: Lang,
     #[cfg(feature = "global")]
     pub global: fn() -> Lang,
 }
 
-impl<Lang: std::fmt::Debug + Hash + Eq + Copy, Key: Hash + Eq + Copy> LocalFmt<Lang, Key> {
+impl<
+        Lang: std::fmt::Display + std::fmt::Debug + Hash + Eq + Copy,
+        Key: std::fmt::Display + std::fmt::Debug + Hash + Eq + Copy,
+    > LocalFmt<Lang, Key>
+{
     #[cfg(not(any(feature = "selected", feature = "global")))]
-    pub fn new(fallback: Lang) -> Self {
+    pub fn new() -> Self {
         Self {
             locales: Default::default(),
-            fallback,
         }
     }
 
     #[cfg(all(feature = "selected", not(feature = "global")))]
-    pub fn new(fallback: Lang, selected: Lang) -> Self {
+    pub fn new(selected: Lang) -> Self {
         Self {
             locales: Default::default(),
-            fallback,
             selected,
         }
     }
 
     #[cfg(all(not(feature = "selected"), feature = "global"))]
-    pub fn new(fallback: Lang, global: fn() -> Lang) -> Self {
+    pub fn new(global: fn() -> Lang) -> Self {
         Self {
             locales: Default::default(),
-            fallback,
             global,
         }
     }
 
     #[cfg(all(feature = "selected", feature = "global"))]
-    pub fn new(fallback: Lang, selected: Lang, global: fn() -> Lang) -> Self {
+    pub fn new(selected: Lang, global: fn() -> Lang) -> Self {
         Self {
             locales: Default::default(),
-            fallback,
             selected,
             global,
         }
@@ -88,18 +87,17 @@ impl<Lang: std::fmt::Debug + Hash + Eq + Copy, Key: Hash + Eq + Copy> LocalFmt<L
         self.format(self.selected, key, args)
     }
 
+    #[allow(clippy::panic)]
     pub fn format(&self, lang: Lang, key: Key, args: &[(&str, &str)]) -> String {
         match self.locales.get(&lang) {
             Some(locale) => match locale.get(&key) {
                 Some(value) => replace_args(value, args),
                 None => {
-                    assert_ne!(self.fallback, lang, "fallback locale should be set");
-                    self.format(self.fallback, key, args)
+                    panic!("{} is not binded", key);
                 }
             },
             None => {
-                assert_ne!(self.fallback, lang, "fallback locale should be set");
-                self.format(self.fallback, key, args)
+                panic!("{} is not binded", lang);
             }
         }
     }

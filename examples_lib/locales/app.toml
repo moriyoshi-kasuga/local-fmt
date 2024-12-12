@@ -3,5 +3,9 @@ ja = "こんにちは世界"
 en = "Hello world"
 
 [goodbye]
-ja = "さようなら %{human} さん"
+ja = "さようなら、%{human}さん"
 en = "Goodbye %{human}"
+
+[game.start]
+ja = "ゲームを開始しますか？"
+en = "Do you want to start the game?"
