@@ -2,6 +2,9 @@ use core::str;
 use std::collections::HashMap;
 use std::hash::Hash;
 
+pub mod enum_map;
+pub use enum_map::*;
+
 #[cfg(feature = "macros")]
 pub use local_fmt_macros as macros;
 

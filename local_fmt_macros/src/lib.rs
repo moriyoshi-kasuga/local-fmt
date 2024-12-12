@@ -1,6 +1,7 @@
 pub(crate) mod args;
 pub(crate) mod convert_str;
 pub(crate) mod enum_iter;
+pub(crate) mod enumable;
 pub(crate) mod gen;
 
 #[proc_macro]
@@ -20,6 +21,13 @@ pub fn derive_convert_str(input: proc_macro::TokenStream) -> proc_macro::TokenSt
 #[proc_macro_derive(EnumIter)]
 pub fn derive_enum_iter(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     enum_iter::derive_enum_iter(syn::parse_macro_input!(input as syn::DeriveInput))
+        .unwrap_or_else(syn::Error::into_compile_error)
+        .into()
+}
+
+#[proc_macro_derive(Enumable)]
+pub fn derive_enumable(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    enumable::derive_enumable(syn::parse_macro_input!(input as syn::DeriveInput))
         .unwrap_or_else(syn::Error::into_compile_error)
         .into()
 }
