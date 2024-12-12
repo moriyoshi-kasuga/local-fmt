@@ -39,7 +39,7 @@ fn derive_convert_str_internal<'a>(
             fn try_from(value: &str) -> Result<Self, Self::Error> {
                 match value {
                     #(#name => Ok(Self::#field_name)),*,
-                    _ => Err(format!("invalid value: {}", value)),
+                    _ => Err(format!("cannot convert {} to {}", value, stringify!(#ident))),
                 }
             }
         }
