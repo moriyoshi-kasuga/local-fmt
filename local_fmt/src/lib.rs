@@ -5,6 +5,11 @@ use std::hash::Hash;
 #[cfg(feature = "macros")]
 pub use local_fmt_macros as macros;
 
+#[cfg(feature = "macros")]
+pub trait EnumIter: Sized {
+    fn iter() -> impl Iterator<Item = Self>;
+}
+
 #[derive(Debug, Clone)]
 pub struct LocalFmt<Lang, Key> {
     pub locales: HashMap<Lang, HashMap<Key, &'static str>>,
