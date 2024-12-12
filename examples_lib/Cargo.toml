@@ -1,0 +1,10 @@
+[package]
+name = "examples_lib"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "examples_lib"
+
+[dependencies]
+local-fmt = { path = "../local_fmt", features = ["macros"] }

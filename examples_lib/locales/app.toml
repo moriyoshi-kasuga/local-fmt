@@ -1,0 +1,7 @@
+[hello]
+ja = "こんにちは世界"
+en = "Hello world"
+
+[goodbye]
+ja = "さようなら %{human} さん"
+en = "Goodbye %{human}"

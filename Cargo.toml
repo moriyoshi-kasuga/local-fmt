@@ -1,6 +1,7 @@
 [workspace]
 resolver = "2"
 members = ["local_fmt", "local_fmt_macros"]
+exclude = ["examples_lib"]
 
 [workspace.package]
 version = "0.1.0"

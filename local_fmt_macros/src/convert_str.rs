@@ -1,3 +1,4 @@
+use convert_case::{Case, Casing};
 use proc_macro2::TokenStream;
 
 pub(crate) fn derive_convert_str(input: syn::DeriveInput) -> syn::Result<TokenStream> {
@@ -21,7 +22,7 @@ fn derive_convert_str_internal<'a>(
     let field_name = variatns.map(|f| &f.ident).collect::<Vec<_>>();
     let name = field_name
         .iter()
-        .map(|i| i.to_string().to_lowercase())
+        .map(|i| i.to_string().to_case(Case::Snake))
         .collect::<Vec<_>>();
 
     let token = quote::quote! {

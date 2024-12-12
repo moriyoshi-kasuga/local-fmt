@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use proc_macro2::{Span, TokenStream};
 use quote::{quote, ToTokens};
-use toml::{Table, Value};
+use toml::Table;
 
 use crate::args::Args;
 
@@ -19,14 +19,20 @@ macro_rules! gen_err_with_str {
     ($s:literal) => {
         Err(syn::Error::new(Span::call_site(), $s))
     };
-    ($s:literal, $($arg:tt),+) => {
-        Err(syn::Error::new(Span::call_site(), format!($s, $($arg),+)))
+    ($s:literal, $($arg:tt)+) => {
+        Err(syn::Error::new(Span::call_site(), format!($s, $($arg)+)))
     };
 }
 
 pub(crate) fn gen_code(macro_args: Args) -> syn::Result<TokenStream> {
     let cargo_dir = unwrap_err!(std::env::var("CARGO_MANIFEST_DIR"));
     let path = std::path::PathBuf::from(cargo_dir).join(&macro_args.locales_path);
+    if !unwrap_err!(std::fs::exists(&path)) {
+        return Err(syn::Error::new(
+            Span::call_site(),
+            format!("locales path {} is not found", path.display()),
+        ));
+    }
 
     let vis = macro_args.vis.clone();
     let ident = macro_args.ident.clone();
@@ -42,31 +48,30 @@ pub(crate) fn gen_code(macro_args: Args) -> syn::Result<TokenStream> {
                 qself: None,
                 path: {
                     let mut p = syn::Path::from(syn::Ident::new("local_fmt", Span::call_site()));
-                    p.segments
-                        .push(syn::Ident::new("LocalFmt", Span::call_site()).into());
-                    let new = {
-                        let mut new: syn::PathSegment =
-                            syn::Ident::new("new", Span::call_site()).into();
-                        new.arguments = syn::PathArguments::AngleBracketed(
-                            syn::AngleBracketedGenericArguments {
-                                colon2_token: Some(syn::Token![::](Span::call_site())),
-                                lt_token: syn::Token![<](Span::call_site()),
-                                args: {
-                                    let mut args = syn::punctuated::Punctuated::new();
-                                    args.push(syn::GenericArgument::Type(syn::Type::Verbatim(
-                                        lang.to_token_stream(),
-                                    )));
-                                    args.push(syn::GenericArgument::Type(syn::Type::Verbatim(
-                                        key.to_token_stream(),
-                                    )));
-                                    args
-                                },
-                                gt_token: syn::Token![>](Span::call_site()),
+                    let mut def: syn::PathSegment =
+                        syn::Ident::new("LocalFmt", Span::call_site()).into();
+
+                    def.arguments =
+                        syn::PathArguments::AngleBracketed(syn::AngleBracketedGenericArguments {
+                            colon2_token: Some(syn::Token![::](Span::call_site())),
+                            lt_token: syn::Token![<](Span::call_site()),
+                            args: {
+                                let mut args = syn::punctuated::Punctuated::new();
+                                args.push(syn::GenericArgument::Type(syn::Type::Verbatim(
+                                    lang.to_token_stream(),
+                                )));
+                                args.push(syn::GenericArgument::Type(syn::Type::Verbatim(
+                                    key.to_token_stream(),
+                                )));
+                                args
                             },
-                        );
-                        new
-                    };
-                    p.segments.push(new);
+                            gt_token: syn::Token![>](Span::call_site()),
+                        });
+
+                    p.segments.push(def);
+
+                    p.segments
+                        .push(syn::Ident::new("new", Span::call_site()).into());
                     p
                 },
             })),
@@ -110,7 +115,8 @@ pub(crate) fn gen_code(macro_args: Args) -> syn::Result<TokenStream> {
     };
 
     let token = quote! {
-        #vis static #ident: std::cell::LazyCell<local_fmt::LocalFmt<#lang, #key>> = std::cell::LazyCell::new(|| {
+        #vis static #ident: std::sync::LazyLock<local_fmt::LocalFmt<#lang, #key>> = std::sync::LazyLock::new(|| {
+            use std::collections::HashMap;
             let mut fmt = #init;
             #gen
             fmt
@@ -122,69 +128,69 @@ pub(crate) fn gen_code(macro_args: Args) -> syn::Result<TokenStream> {
 
 fn gen_code_of_app(table: Table, args: Args) -> syn::Result<TokenStream> {
     let Args {
-        locales_path: _,
-        vis,
-        ident,
-        lang,
-        key,
-        fallback: _,
-        #[cfg(feature = "selected")]
-        selected,
-        #[cfg(feature = "global")]
-        global,
+        locales_path,
+        // vis,
+        // ident,
+        // lang,
+        // key,
+        ..
     } = args;
 
-    fn def_local(
-        def_token: &mut TokenStream,
-        path: Vec<&str>,
-        last: &str,
-        table: &Table,
-    ) -> syn::Result<()> {
-        let is_table = table.values().all(Value::is_table);
-        let is_string = table.values().all(Value::is_str);
+    fn def_local(def_token: &mut TokenStream, path: Vec<&str>, table: &Table) -> syn::Result<()> {
+        let langs: Vec<&String> = table.keys().collect();
+        let tables: Option<Vec<&Table>> = table.values().map(|v| v.as_table()).collect();
+        let strings: Option<Vec<&str>> = table.values().map(|v| v.as_str()).collect();
 
-        match (is_table, is_string) {
-            (true, true) => return gen_err_with_str!("key {} is both table and string", last),
-            (false, false) => return gen_err_with_str!("key {} is not table and not string", last),
-            (true, false) => {
-                let mut table = table.iter();
-                for (key, value) in table {
-                    let Some(table) = value.as_table() else {
-                        return gen_err_with_str!("key {} is not table", key);
-                    };
-                    def_local(
-                        def_token,
-                        {
-                            let mut path = path.clone();
-                            path.push(last);
-                            path
-                        },
-                        &key,
-                        table,
-                    )?;
-                }
+        match (tables, strings) {
+            (None, None) => {
+                gen_err_with_str!("key {} is not table and not string", path.join("."))
             }
-            (false, true) => {}
+            (Some(_), Some(_)) => {
+                gen_err_with_str!("key {} is both table and string", path.join("."))
+            }
+            (None, Some(strings)) => {
+                let path = path.join("_");
+                let token = quote! {
+                    {
+                        let mut locales = HashMap::new();
+                        #(
+                            locales.insert(#langs.try_into().unwrap(), #strings);
+                        )*
+                        is_definitioned_fallback!(#path, locales);
+                    }
+                };
+                def_token.extend(token);
+                Ok(())
+            }
+            (Some(tables), None) => {
+                for (key, table) in langs.iter().zip(tables) {
+                    let mut path = path.clone();
+                    path.push(key);
+                    def_local(def_token, path, table)?;
+                }
+                Ok(())
+            }
         }
-
-        Ok(())
     }
 
     let mut def_token = TokenStream::new();
 
+    if table.is_empty() {
+        return gen_err_with_str!("app.toml is empty");
+    }
+
     for (key, value) in &table {
         let Some(table) = value.as_table() else {
-            return gen_err_with_str!("key {} is not table", key);
+            return gen_err_with_str!("key {} is not table in {}/app.toml", key, locales_path);
         };
-        def_local(&mut def_token, vec![], &key, table)?;
+        def_local(&mut def_token, vec![key], table)?;
     }
 
     let gen = quote! {
-        let fallback = fmt.fallback;
         macro_rules! is_definitioned_fallback {
             ($key:expr, $locales:expr) => {
-                assert!(locales.contains_key(fallback), "key is not found: {} in fallback locale", $key);
-                fmt.add_langs_of_key($key, $locale);
+                assert!($locales.contains_key(&fmt.fallback), "key is not found: {} in fallback locale", $key);
+                fmt.add_langs_of_key($key.try_into().unwrap(), $locales);
             }
         }
         #def_token
@@ -200,11 +206,7 @@ fn gen_code_of_table(path: PathBuf, args: Args) -> syn::Result<TokenStream> {
         ident,
         lang,
         key,
-        fallback: _,
-        #[cfg(feature = "selected")]
-        selected,
-        #[cfg(feature = "global")]
-        global,
+        ..
     } = args;
 
     let gen = quote! {};

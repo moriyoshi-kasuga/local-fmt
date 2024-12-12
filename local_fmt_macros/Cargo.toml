@@ -13,9 +13,10 @@ keywords.workspace = true
 [dependencies]
 proc-macro2 = "1.0"
 quote = "1.0"
-syn = "2.0"
+syn = { version = "2.0", features = ["full"] }
 
 toml = "0.8"
+convert_case = "0.6"
 
 [lib]
 proc-macro = true

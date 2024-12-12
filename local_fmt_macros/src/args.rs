@@ -29,92 +29,105 @@ impl syn::parse::Parse for Args {
         #[cfg(feature = "global")]
         let mut global = None;
 
-        while let Ok(path) = input.parse::<Path>() {
-            match path {
-                path if path.is_ident("path") => {
-                    if locales_path.is_some() {
-                        return Err(syn::Error::new_spanned(path, "duplicate path attribute"));
-                    }
-                    let _ = input.parse::<Token![=]>()?;
+        loop {
+            if input.peek(Token![,]) {
+                let _ = input.parse::<Token![,]>();
+            }
 
-                    let lit_str = input.parse::<LitStr>()?;
-                    locales_path = Some(lit_str.value());
-                }
-                path if path.is_ident("visibility") => {
-                    if vis.is_some() {
-                        return Err(syn::Error::new_spanned(
-                            path,
-                            "duplicate visibility attribute",
-                        ));
-                    }
-                    let _ = input.parse::<Token![=]>()?;
+            if let Ok(path) = input.parse::<Path>() {
+                match path {
+                    path if path.is_ident("path") => {
+                        if locales_path.is_some() {
+                            return Err(syn::Error::new_spanned(path, "duplicate path attribute"));
+                        }
+                        let _ = input.parse::<Token![=]>()?;
 
-                    let v = input.parse::<Visibility>()?;
-                    vis = Some(v);
-                }
-                path if path.is_ident("ident") => {
-                    if ident.is_some() {
-                        return Err(syn::Error::new_spanned(path, "duplicate ident attribute"));
+                        let lit_str = input.parse::<LitStr>()?;
+                        locales_path = Some(lit_str.value());
                     }
-                    let _ = input.parse::<Token![=]>()?;
+                    path if path.is_ident("visibility") => {
+                        if vis.is_some() {
+                            return Err(syn::Error::new_spanned(
+                                path,
+                                "duplicate visibility attribute",
+                            ));
+                        }
+                        let _ = input.parse::<Token![=]>()?;
 
-                    let i = input.parse::<Ident>()?;
-                    ident = Some(i);
-                }
-                path if path.is_ident("lang") => {
-                    if lang.is_some() {
-                        return Err(syn::Error::new_spanned(path, "duplicate lang attribute"));
+                        let v = input.parse::<Visibility>()?;
+                        vis = Some(v);
                     }
-                    let _ = input.parse::<Token![=]>()?;
+                    path if path.is_ident("ident") => {
+                        if ident.is_some() {
+                            return Err(syn::Error::new_spanned(path, "duplicate ident attribute"));
+                        }
+                        let _ = input.parse::<Token![=]>()?;
 
-                    let i = input.parse::<Ident>()?;
-                    lang = Some(i);
-                }
-                path if path.is_ident("key") => {
-                    if key.is_some() {
-                        return Err(syn::Error::new_spanned(path, "duplicate key attribute"));
+                        let i = input.parse::<Ident>()?;
+                        ident = Some(i);
                     }
-                    let _ = input.parse::<Token![=]>()?;
+                    path if path.is_ident("lang") => {
+                        if lang.is_some() {
+                            return Err(syn::Error::new_spanned(path, "duplicate lang attribute"));
+                        }
+                        let _ = input.parse::<Token![=]>()?;
 
-                    let i = input.parse::<Ident>()?;
-                    key = Some(i);
-                }
-                path if path.is_ident("fallback") => {
-                    if fallback.is_some() {
-                        return Err(syn::Error::new_spanned(
-                            path,
-                            "duplicate fallback attribute",
-                        ));
+                        let i = input.parse::<Ident>()?;
+                        lang = Some(i);
                     }
-                    let _ = input.parse::<Token![=]>()?;
+                    path if path.is_ident("key") => {
+                        if key.is_some() {
+                            return Err(syn::Error::new_spanned(path, "duplicate key attribute"));
+                        }
+                        let _ = input.parse::<Token![=]>()?;
 
-                    let expr = input.parse::<Expr>()?;
-                    fallback = Some(expr);
-                }
-                #[cfg(feature = "selected")]
-                path if path.is_ident("selected") => {
-                    if selected.is_some() {
-                        return Err(syn::Error::new_spanned(
-                            path,
-                            "duplicate selected attribute",
-                        ));
+                        let i = input.parse::<Ident>()?;
+                        key = Some(i);
                     }
-                    let _ = input.parse::<Token![=]>()?;
+                    path if path.is_ident("fallback") => {
+                        if fallback.is_some() {
+                            return Err(syn::Error::new_spanned(
+                                path,
+                                "duplicate fallback attribute",
+                            ));
+                        }
+                        let _ = input.parse::<Token![=]>()?;
 
-                    let expr = input.parse::<Expr>()?;
-                    selected = Some(expr);
-                }
-                #[cfg(feature = "global")]
-                path if path.is_ident("global") => {
-                    if global.is_some() {
-                        return Err(syn::Error::new_spanned(path, "duplicate global attribute"));
+                        let expr = input.parse::<Expr>()?;
+                        fallback = Some(expr);
                     }
-                    let _ = input.parse::<Token![=]>()?;
+                    #[cfg(feature = "selected")]
+                    path if path.is_ident("selected") => {
+                        if selected.is_some() {
+                            return Err(syn::Error::new_spanned(
+                                path,
+                                "duplicate selected attribute",
+                            ));
+                        }
+                        let _ = input.parse::<Token![=]>()?;
 
-                    let path = input.parse::<Expr>()?;
-                    global = Some(path);
+                        let expr = input.parse::<Expr>()?;
+                        selected = Some(expr);
+                    }
+                    #[cfg(feature = "global")]
+                    path if path.is_ident("global") => {
+                        if global.is_some() {
+                            return Err(syn::Error::new_spanned(
+                                path,
+                                "duplicate global attribute",
+                            ));
+                        }
+                        let _ = input.parse::<Token![=]>()?;
+
+                        let path = input.parse::<Expr>()?;
+                        global = Some(path);
+                    }
+                    _ => {
+                        return Err(syn::Error::new_spanned(path, "unknown attribute"));
+                    }
                 }
-                _ => {}
+            } else {
+                break;
             }
         }
 
