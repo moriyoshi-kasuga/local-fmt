@@ -136,7 +136,7 @@ fn gen_code_of_app(table: Table, args: Args) -> syn::Result<TokenStream> {
                         let mut locales = HashMap::with_capacity(capacity);
                         let path = #path.try_into().unwrap();
                         #(
-                            locales.insert(#langs.try_into().map_err(|err| format!("happen at \"{}\": {}", path, err)).unwrap(), #strings);
+                            locales.insert(to_lang!(#langs,path), #strings);
                         )*
                         is_definitioned!(path, locales);
                     }
@@ -183,6 +183,12 @@ fn gen_code_of_app(table: Table, args: Args) -> syn::Result<TokenStream> {
                 }
                 assert!(def_keys.insert($key), "Key \"{}\" is already defined", $key);
                 fmt.add_langs_of_key($key, $locales);
+            }
+        }
+
+        macro_rules! to_lang {
+            ($lang:expr,$path:expr) => {
+                $lang.try_into().map_err(|err| format!("happen at \"{}\": {}", $path, err)).unwrap()
             }
         }
 
