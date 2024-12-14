@@ -87,9 +87,11 @@ pub(crate) fn gen_code(macro_args: Args) -> syn::Result<TokenStream> {
         call
     };
 
-    let app = path.join("app.toml");
-
-    let gen = if unwrap_err!(std::fs::exists(&app)) {
+    let gen = if let Some(ref app_file) = macro_args.app_file {
+        let app = path.join(app_file);
+        if !unwrap_err!(std::fs::exists(&app)) {
+            return gen_err_with_str!("app file {} is not found", app.display());
+        };
         let s = unwrap_err!(std::fs::read_to_string(&app));
         let table = unwrap_err!(s.parse::<Table>());
         gen_code_of_app(table, macro_args)?

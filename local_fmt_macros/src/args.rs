@@ -10,6 +10,7 @@ pub(crate) struct Args {
     pub ident: Ident,
     pub lang: Ident,
     pub key: Ident,
+    pub app_file: Option<String>,
     #[cfg(feature = "selected")]
     pub selected: Expr,
     #[cfg(feature = "global")]
@@ -23,6 +24,7 @@ impl syn::parse::Parse for Args {
         let mut ident = None;
         let mut lang = None;
         let mut key = None;
+        let mut app_file = None;
 
         #[cfg(feature = "selected")]
         let mut selected = None;
@@ -37,7 +39,7 @@ impl syn::parse::Parse for Args {
 
             if let Ok(path) = input.parse::<Path>() {
                 match path {
-                    path if path.is_ident("path") => {
+                    path if path.is_ident("locales_path") => {
                         if locales_path.is_some() {
                             return Err(syn::Error::new_spanned(path, "duplicate path attribute"));
                         }
@@ -85,6 +87,18 @@ impl syn::parse::Parse for Args {
                         let i = input.parse::<Ident>()?;
                         key = Some(i);
                     }
+                    path if path.is_ident("app_file") => {
+                        if app_file.is_some() {
+                            return Err(syn::Error::new_spanned(
+                                path,
+                                "duplicate app_file attribute",
+                            ));
+                        }
+                        let _ = input.parse::<Token![=]>()?;
+
+                        let i = input.parse::<LitStr>()?;
+                        app_file = Some(i.value());
+                    }
                     #[cfg(feature = "selected")]
                     path if path.is_ident("selected") => {
                         if selected.is_some() {
@@ -126,6 +140,7 @@ impl syn::parse::Parse for Args {
             ident: ident.ok_or_else(|| syn::Error::new(input.span(), "no ident attribute"))?,
             lang: lang.ok_or_else(|| syn::Error::new(input.span(), "no lang attribute"))?,
             key: key.ok_or_else(|| syn::Error::new(input.span(), "no key attribute"))?,
+            app_file,
             #[cfg(feature = "selected")]
             selected: selected
                 .ok_or_else(|| syn::Error::new(input.span(), "no selected attribute"))?,
