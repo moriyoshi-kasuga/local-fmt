@@ -8,8 +8,8 @@ pub enum Key {
 
 #[test]
 fn enum_iter() {
-    let mut iter = <Key as local_fmt::EnumIter>::into_iter();
-    assert_eq!(iter.next(), Some(Key::HelloWorld));
-    assert_eq!(iter.next(), Some(Key::GameEndMessage));
+    let mut iter = <Key as local_fmt::EnumIter>::iter();
+    assert_eq!(iter.next(), Some(Key::HelloWorld).as_ref());
+    assert_eq!(iter.next(), Some(Key::GameEndMessage).as_ref());
     assert_eq!(iter.next(), None);
 }

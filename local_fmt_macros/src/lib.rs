@@ -11,6 +11,27 @@ pub fn def_local_fmt(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
         .into()
 }
 
+#[proc_macro_derive(UseLocalFmt)]
+pub fn derive_use_local_fmt(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    let input = syn::parse_macro_input!(input as syn::DeriveInput);
+    let mut convert_str = match convert_str::derive_convert_str(input.clone()) {
+        Ok(convert_str) => convert_str,
+        Err(e) => return e.into_compile_error().into(),
+    };
+    let enum_iter = match enum_iter::derive_enum_iter(input.clone()) {
+        Ok(enum_iter) => enum_iter,
+        Err(e) => return e.into_compile_error().into(),
+    };
+    let enumable = match enumable::derive_enumable(input.clone()) {
+        Ok(enumable) => enumable,
+        Err(e) => return e.into_compile_error().into(),
+    };
+
+    convert_str.extend(enum_iter);
+    convert_str.extend(enumable);
+    convert_str.into()
+}
+
 #[proc_macro_derive(ConvertStr)]
 pub fn derive_convert_str(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     convert_str::derive_convert_str(syn::parse_macro_input!(input as syn::DeriveInput))

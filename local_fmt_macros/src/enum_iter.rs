@@ -25,9 +25,6 @@ fn derive_enum_iter_internal<'a>(
             fn iter<'a>() -> core::slice::Iter<'a, Self> {
                 [#(Self::#field_name),*].iter()
             }
-            fn into_iter() -> impl Iterator<Item = Self> {
-                [#(Self::#field_name),*].into_iter()
-            }
         }
     };
     Ok(token)

@@ -23,8 +23,7 @@ fn derive_enumable_internal<'a>(
     let field_id = Vec::from_iter(0..len);
     let token = quote::quote! {
         impl #impl_generics local_fmt::Enumable for #ident #ty_generics #where_clause {
-            const LENGTH: usize = #len;
-            type SLICE<V> = [V; #len];
+            type Array<V> = [V; #len];
 
             fn _from_usize(value: usize) -> Self {
                 match value {

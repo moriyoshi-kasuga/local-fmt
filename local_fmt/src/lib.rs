@@ -1,7 +1,3 @@
-use core::str;
-use std::collections::HashMap;
-use std::hash::Hash;
-
 pub mod enum_map;
 pub use enum_map::*;
 
@@ -11,70 +7,62 @@ pub use local_fmt_macros as macros;
 #[cfg(feature = "macros")]
 pub trait EnumIter: Sized {
     fn iter<'a>() -> core::slice::Iter<'a, Self>;
-    fn into_iter() -> impl Iterator<Item = Self>;
 }
 
-#[derive(Debug, Clone)]
-pub struct LocalFmt<Lang, Key> {
-    pub locales: HashMap<Lang, HashMap<Key, &'static str>>,
+#[derive(Debug)]
+pub struct LocalFmt<Lang: Enumable, Key: Enumable> {
+    pub locales: EnumableMap<Lang, EnumableMap<Key, &'static str>>,
     #[cfg(feature = "selected")]
     pub selected: Lang,
     #[cfg(feature = "global")]
     pub global: fn() -> Lang,
 }
 
-impl<
-        Lang: std::fmt::Display + std::fmt::Debug + Hash + Eq + Copy,
-        Key: std::fmt::Display + std::fmt::Debug + Hash + Eq + Copy,
-    > LocalFmt<Lang, Key>
+impl<Lang: Enumable + Clone, Key: Enumable + Clone> Clone for LocalFmt<Lang, Key>
+where
+    Key::Array<&'static str>: Clone,
+    Lang::Array<EnumableMap<Key, &'static str>>: Clone,
 {
-    #[cfg(not(any(feature = "selected", feature = "global")))]
-    pub fn new() -> Self {
+    fn clone(&self) -> Self {
         Self {
-            locales: Default::default(),
+            locales: self.locales.clone(),
+            #[cfg(feature = "selected")]
+            selected: self.selected.clone(),
+            #[cfg(feature = "global")]
+            global: self.global,
         }
+    }
+}
+
+impl<Lang: Enumable + Copy, Key: Enumable> LocalFmt<Lang, Key> {
+    #[cfg(not(any(feature = "selected", feature = "global")))]
+    pub fn new(locales: EnumableMap<Lang, EnumableMap<Key, &'static str>>) -> Self {
+        Self { locales }
     }
 
     #[cfg(all(feature = "selected", not(feature = "global")))]
-    pub fn new(selected: Lang) -> Self {
-        Self {
-            locales: Default::default(),
-            selected,
-        }
+    pub fn new(locales: EnumableMap<Lang, EnumableMap<Key, &'static str>>, selected: Lang) -> Self {
+        Self { locales, selected }
     }
 
     #[cfg(all(not(feature = "selected"), feature = "global"))]
-    pub fn new(global: fn() -> Lang) -> Self {
-        Self {
-            locales: Default::default(),
-            global,
-        }
+    pub fn new(
+        locales: EnumableMap<Lang, EnumableMap<Key, &'static str>>,
+        global: fn() -> Lang,
+    ) -> Self {
+        Self { locales, global }
     }
 
     #[cfg(all(feature = "selected", feature = "global"))]
-    pub fn new(selected: Lang, global: fn() -> Lang) -> Self {
+    pub fn new(
+        locales: EnumableMap<Lang, EnumableMap<Key, &'static str>>,
+        selected: Lang,
+        global: fn() -> Lang,
+    ) -> Self {
         Self {
-            locales: Default::default(),
+            locales,
             selected,
             global,
-        }
-    }
-
-    #[inline]
-    pub fn add_locale_fmt(&mut self, lang: Lang, key: Key, value: &'static str) {
-        let locale = self.locales.entry(lang).or_default();
-        locale.insert(key, value);
-    }
-
-    #[inline]
-    pub fn add_lang(&mut self, lang: Lang, locale: HashMap<Key, &'static str>) {
-        self.locales.insert(lang, locale);
-    }
-
-    #[inline]
-    pub fn add_langs_of_key(&mut self, key: Key, locale: HashMap<Lang, &'static str>) {
-        for (lang, value) in locale {
-            self.add_locale_fmt(lang, key, value);
         }
     }
 
@@ -92,17 +80,7 @@ impl<
 
     #[allow(clippy::panic)]
     pub fn format(&self, lang: Lang, key: Key, args: &[(&str, &str)]) -> String {
-        match self.locales.get(&lang) {
-            Some(locale) => match locale.get(&key) {
-                Some(value) => replace_args(value, args),
-                None => {
-                    panic!("{} is not binded", key);
-                }
-            },
-            None => {
-                panic!("{} is not binded", lang);
-            }
-        }
+        replace_args(self.locales[lang][key], args)
     }
 }
 
@@ -119,7 +97,7 @@ pub fn replace_args(text: &'static str, args: &[(&str, &str)]) -> String {
     while let Some(i) = input_bytes.next() {
         match *i {
             b'}' if inner => {
-                let key_s = unsafe { str::from_utf8_unchecked(&buffer) };
+                let key_s = unsafe { core::str::from_utf8_unchecked(&buffer) };
                 match args.clone().find(|(key, _)| *key == key_s) {
                     Some((_, value)) => {
                         output.extend(value.as_bytes());
