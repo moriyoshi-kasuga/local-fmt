@@ -42,7 +42,7 @@ fn derive_convert_str_internal<'a>(
 
         impl #impl_generics core::str::FromStr for #ident #ty_generics #where_clause {
             type Err = String;
-            
+
             fn from_str(value: &str) -> Result<Self, Self::Err> {
                 <Self as TryFrom<&str>>::try_from(value)
             }

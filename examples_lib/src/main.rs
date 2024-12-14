@@ -1,20 +1,25 @@
-use local_fmt::macros::{def_local_fmt, ConvertStr, EnumIter};
+use local_fmt::macros::{def_local_fmt, ConvertStr, Enumable};
 
-#[derive(Default, ConvertStr, Debug, Hash, Eq, PartialEq, Clone, Copy, EnumIter)]
+#[derive(Default, ConvertStr, Debug, Hash, Eq, PartialEq, Clone, Copy, Enumable)]
 pub enum Lang {
     JA,
     #[default]
     EN,
 }
 
-#[derive(ConvertStr, Debug, Hash, Eq, PartialEq, Clone, Copy, EnumIter)]
+#[derive(ConvertStr, Debug, Hash, Eq, PartialEq, Clone, Copy, Enumable)]
 pub enum Key {
     Hello,
     Goodbye,
     GameStart,
 }
 
-def_local_fmt!(ident = TRANSLATOR, lang = Lang, key = Key);
+def_local_fmt!(
+    ident = TRANSLATOR,
+    lang = Lang,
+    key = Key,
+    app_file = "app.toml"
+);
 
 #[test]
 fn test_translator() {
