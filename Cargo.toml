@@ -4,7 +4,7 @@ members = ["local_fmt", "local_fmt_macros"]
 exclude = ["examples_lib"]
 
 [workspace.package]
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 rust-version = "1.81"
 description = "This crate provides localizable format strings."

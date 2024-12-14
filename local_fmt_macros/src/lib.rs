@@ -1,6 +1,5 @@
 pub(crate) mod args;
 pub(crate) mod convert_str;
-pub(crate) mod enum_iter;
 pub(crate) mod enumable;
 pub(crate) mod gen;
 
@@ -18,16 +17,11 @@ pub fn derive_use_local_fmt(input: proc_macro::TokenStream) -> proc_macro::Token
         Ok(convert_str) => convert_str,
         Err(e) => return e.into_compile_error().into(),
     };
-    let enum_iter = match enum_iter::derive_enum_iter(input.clone()) {
-        Ok(enum_iter) => enum_iter,
-        Err(e) => return e.into_compile_error().into(),
-    };
     let enumable = match enumable::derive_enumable(input.clone()) {
         Ok(enumable) => enumable,
         Err(e) => return e.into_compile_error().into(),
     };
 
-    convert_str.extend(enum_iter);
     convert_str.extend(enumable);
     convert_str.into()
 }
@@ -35,13 +29,6 @@ pub fn derive_use_local_fmt(input: proc_macro::TokenStream) -> proc_macro::Token
 #[proc_macro_derive(ConvertStr)]
 pub fn derive_convert_str(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     convert_str::derive_convert_str(syn::parse_macro_input!(input as syn::DeriveInput))
-        .unwrap_or_else(syn::Error::into_compile_error)
-        .into()
-}
-
-#[proc_macro_derive(EnumIter)]
-pub fn derive_enum_iter(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
-    enum_iter::derive_enum_iter(syn::parse_macro_input!(input as syn::DeriveInput))
         .unwrap_or_else(syn::Error::into_compile_error)
         .into()
 }

@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::{collections::HashMap, path::PathBuf};
 
 use proc_macro2::{Span, TokenStream};
 use quote::{quote, ToTokens};
@@ -79,48 +79,85 @@ pub(crate) fn gen_code(macro_args: Args) -> syn::Result<TokenStream> {
             paren_token: syn::token::Paren(Span::call_site()),
             args: Default::default(),
         };
+
         #[cfg(feature = "selected")]
-        call.args.push(macro_args.selected.clone());
+        let selected = macro_args.selected.clone();
         #[cfg(feature = "global")]
-        call.args.push(macro_args.global.clone());
+        let global = macro_args.global.clone();
+
+        {
+            let def = if let Some(ref app_file) = macro_args.app_file {
+                let app = path.join(app_file);
+                if !unwrap_err!(std::fs::exists(&app)) {
+                    return gen_err_with_str!("app file {} is not found", app.display());
+                };
+                let s = unwrap_err!(std::fs::read_to_string(&app));
+                let table = unwrap_err!(s.parse::<Table>());
+                gen_code_of_app(table, macro_args)?
+            } else {
+                gen_code_of_table(path, macro_args)?
+            };
+
+            let mut gen = TokenStream::new();
+
+            for (lang, locales) in def {
+                let (keys, v): (Vec<_>, Vec<_>) = locales.into_iter().unzip();
+
+                let keys = quote! {
+                    #lang => generate_match!({ #( #keys => #v ,)* }, "key \"{1}\" is not defined for lang \"{0}\"", #lang),
+                };
+
+                gen.extend(keys);
+            }
+
+            let gen = quote! {
+                generate_match!({ #gen }, "Lang \"{}\" is not defined")
+            };
+
+            match syn::parse2::<syn::Expr>(gen) {
+                Ok(gen) => call.args.push(gen),
+                Err(_) => return gen_err_with_str!("failed builtin"),
+            };
+        }
+
+        #[cfg(feature = "selected")]
+        call.args.push(selected.clone());
+        #[cfg(feature = "global")]
+        call.args.push(global.clone());
 
         call
     };
 
-    let gen = if let Some(ref app_file) = macro_args.app_file {
-        let app = path.join(app_file);
-        if !unwrap_err!(std::fs::exists(&app)) {
-            return gen_err_with_str!("app file {} is not found", app.display());
-        };
-        let s = unwrap_err!(std::fs::read_to_string(&app));
-        let table = unwrap_err!(s.parse::<Table>());
-        gen_code_of_app(table, macro_args)?
-    } else {
-        gen_code_of_table(path, macro_args)?
-    };
-
     let token = quote! {
+        #[allow(clippy::panic, clippy::expect_used)]
         #vis static #ident: std::sync::LazyLock<local_fmt::LocalFmt<#lang, #key>> = std::sync::LazyLock::new(|| {
-            use std::collections::HashMap;
-            let mut fmt = #init;
-            #gen
-            fmt
+            macro_rules! generate_match {
+                ( { $($key:expr => $variant:expr,)+ }, $($arg:tt)+ ) => {
+                    local_fmt::EnumableMap::new(|v| match v {
+                        $(__key__ if Into::<&'static str>::into(__key__) == $key => $variant,)+
+                        __key__ => panic!($($arg)+, __key__),
+                    })
+                }
+            }
+
+            #init
         });
     };
 
     Ok(token)
 }
 
-fn gen_code_of_app(table: Table, args: Args) -> syn::Result<TokenStream> {
-    let Args {
-        locales_path,
-        lang,
-        key,
-        ..
-    } = args;
+fn gen_code_of_app(
+    table: Table,
+    args: Args,
+) -> syn::Result<HashMap<String, HashMap<String, String>>> {
+    let Args { locales_path, .. } = args;
 
-    fn def_local(def_token: &mut TokenStream, path: Vec<&str>, table: &Table) -> syn::Result<()> {
-        let langs: Vec<&String> = table.keys().collect();
+    fn def_local(
+        def: &mut HashMap<String, HashMap<String, String>>,
+        path: Vec<&str>,
+        table: &Table,
+    ) -> syn::Result<()> {
         let tables: Option<Vec<&Table>> = table.values().map(|v| v.as_table()).collect();
         let strings: Option<Vec<&str>> = table.values().map(|v| v.as_str()).collect();
 
@@ -133,89 +170,48 @@ fn gen_code_of_app(table: Table, args: Args) -> syn::Result<TokenStream> {
             }
             (None, Some(strings)) => {
                 let path = path.join("_");
-                let token = quote! {
-                    {
-                        let mut locales = HashMap::with_capacity(capacity);
-                        let path = #path.try_into().unwrap();
-                        #(
-                            locales.insert(to_lang!(#langs,path), #strings);
-                        )*
-                        is_definitioned!(path, locales);
-                    }
-                };
-                def_token.extend(token);
+                for (lang, s) in table.keys().zip(strings) {
+                    def.entry(lang.clone())
+                        .or_default()
+                        .insert(path.clone(), s.to_string());
+                }
                 Ok(())
             }
             (Some(tables), None) => {
-                for (key, table) in langs.iter().zip(tables) {
+                for (key, table) in table.keys().zip(tables) {
                     let mut path = path.clone();
                     path.push(key);
-                    def_local(def_token, path, table)?;
+                    def_local(def, path, table)?;
                 }
                 Ok(())
             }
         }
     }
-
-    let mut def_token = TokenStream::new();
 
     if table.is_empty() {
         return gen_err_with_str!("app.toml is empty");
     }
 
+    let mut def = HashMap::<String, HashMap<String, String>>::new();
+
     for (key, value) in &table {
         let Some(table) = value.as_table() else {
             return gen_err_with_str!("key {} is not table in {}/app.toml", key, locales_path);
         };
-        def_local(&mut def_token, vec![key], table)?;
+        def_local(&mut def, vec![key], table)?;
     }
 
-    let gen = quote! {
-        let langs = <#lang as local_fmt::EnumIter>::iter();
-        let capacity = langs.len();
-        let keys = <#key as local_fmt::EnumIter>::iter();
-
-        let mut def_keys = std::collections::HashSet::<#key>::new();
-
-        macro_rules! is_definitioned {
-            ($key:expr, $locales:expr) => {
-                assert_eq!(capacity, $locales.len(), "Not all locales are defined for key \"{}\"", $key);
-                for lang in langs.clone() {
-                    assert!($locales.contains_key(lang), "Not all locales are defined for key \"{}\" and lang \"{}\"", $key, lang);
-                }
-                assert!(def_keys.insert($key), "Key \"{}\" is already defined", $key);
-                fmt.add_langs_of_key($key, $locales);
-            }
-        }
-
-        macro_rules! to_lang {
-            ($lang:expr,$path:expr) => {
-                $lang.try_into().map_err(|err| format!("happen at \"{}\": {}", $path, err)).unwrap()
-            }
-        }
-
-        #def_token
-
-        assert_eq!(keys.len(), def_keys.len(), "Not all keys are defined");
-        for key in keys {
-            assert!(def_keys.contains(key), "Key \"{}\" is not defined", key);
-        }
-    };
-
-    Ok(gen)
+    Ok(def)
 }
 
-fn gen_code_of_table(path: PathBuf, args: Args) -> syn::Result<TokenStream> {
-    let Args {
-        locales_path,
-        vis,
-        ident,
-        lang,
-        key,
-        ..
-    } = args;
+fn gen_code_of_table(
+    path: PathBuf,
+    args: Args,
+) -> syn::Result<HashMap<String, HashMap<String, String>>> {
+    let _ = path;
+    let Args { .. } = args;
 
-    let gen = quote! {};
+    // let mut def = HashMap::<String, HashMap<String, String>>::new();
 
-    Ok(gen)
+    Ok(Default::default())
 }

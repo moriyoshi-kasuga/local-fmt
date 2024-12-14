@@ -30,7 +30,7 @@ fn local_fmt() {
         Lang::Japanese => ja_key_map.clone(),
     });
 
-    let mut fmt = local_fmt::LocalFmt::new(lang_map);
+    let fmt = local_fmt::LocalFmt::new(lang_map);
 
     assert_eq!(
         fmt.format(Lang::English, Key::HelloWorld, &[("name", "Mori")]),

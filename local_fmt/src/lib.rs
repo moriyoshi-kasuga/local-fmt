@@ -4,11 +4,6 @@ pub use enum_map::*;
 #[cfg(feature = "macros")]
 pub use local_fmt_macros as macros;
 
-#[cfg(feature = "macros")]
-pub trait EnumIter: Sized {
-    fn iter<'a>() -> core::slice::Iter<'a, Self>;
-}
-
 #[derive(Debug)]
 pub struct LocalFmt<Lang: Enumable, Key: Enumable> {
     pub locales: EnumableMap<Lang, EnumableMap<Key, &'static str>>,
