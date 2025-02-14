@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 #[cfg(feature = "macros")]
 pub use local_fmt_macros as macros;
 
@@ -12,7 +14,34 @@ pub enum MessageFormat {
 pub struct ConstMessage<const N: usize>(Vec<MessageFormat>);
 
 impl<const N: usize> ConstMessage<N> {
-    pub fn new(formats: Vec<MessageFormat>) -> Self {
+    pub fn new(formats: Vec<MessageFormat>) -> Result<Self, String> {
+        let mut numbers = HashSet::<usize>::with_capacity(N);
+
+        for i in &formats {
+            if let MessageFormat::Arg(n) = i {
+                if *n >= N {
+                    return Err(format!("please set number between [0 and {})", N));
+                }
+                numbers.insert(*n);
+            }
+        }
+
+        if numbers.len() != N {
+            return Err(format!("please set all numbers between [0 and {})", N));
+        }
+
+        for number in 0..N {
+            if !numbers.contains(&number) {
+                return Err(format!("please set all numbers between [0 and {})", N));
+            }
+        }
+
+        Ok(Self(formats))
+    }
+
+    /// # Safety
+    /// fill arg number by `[0, N)`
+    pub unsafe fn new_unchecked(formats: Vec<MessageFormat>) -> Self {
         Self(formats)
     }
 
@@ -36,25 +65,8 @@ impl<'de, const N: usize> serde::Deserialize<'de> for ConstMessage<N> {
         D: serde::Deserializer<'de>,
     {
         let formats = Vec::<MessageFormat>::deserialize(deserializer)?;
-        for i in &formats {
-            if let MessageFormat::Arg(n) = i {
-                if *n >= N {
-                    return Err(serde::de::Error::custom(format!(
-                        "please set number between 0 and {} exclusive",
-                        N
-                    )));
-                }
-            }
-        }
 
-        if formats.len() != N {
-            return Err(serde::de::Error::custom(format!(
-                "please set {} arguments",
-                N
-            )));
-        }
-
-        Ok(Self(formats))
+        Self::new(formats).map_err(serde::de::Error::custom)
     }
 }
 
@@ -85,6 +97,12 @@ impl<'de> serde::Deserialize<'de> for MessageFormat {
             where
                 E: serde::de::Error,
             {
+                if v > usize::MAX as u64 {
+                    return Err(serde::de::Error::custom(format!(
+                        "please number between 0 and {}",
+                        usize::MAX
+                    )));
+                }
                 Ok(MessageFormat::Arg(v as usize))
             }
 
@@ -120,6 +138,6 @@ macro_rules! gen_const_message {
          $crate::MessageFormat::Arg($number)
      };
      ($($tt:tt),*) => {
-         $crate::ConstMessage::new(vec![$(gen_const_message!(@gen $tt)),*])
+         $crate::ConstMessage::new(vec![$(gen_const_message!(@gen $tt)),*]).unwrap()
      }
  }
