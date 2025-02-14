@@ -13,6 +13,7 @@ keywords.workspace = true
 [dependencies]
 local-fmt-macros = { version = "^0", path = "../local_fmt_macros", optional = true }
 serde = "1.0"
+thiserror = "2.0"
 
 [features]
 default = []

@@ -6,12 +6,12 @@ fn test_unchecked() {
 }
 
 #[test]
-fn test_1_success() {
-    let _: ConstMessage<1> = gen_const_message!("Hello! ", { 0 });
+fn test_1() {
+    let _ = gen_const_message!(1, "Hello! ", { 0 });
 }
 
 #[test]
 #[should_panic]
-fn test_2_failed() {
-    let _: ConstMessage<2> = gen_const_message!("Hello! ", { 0 }, " World!");
+fn test_2() {
+    let _ = gen_const_message!(2, "Hello! ", { 0 }, " World!", { 1 });
 }

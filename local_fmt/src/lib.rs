@@ -1,11 +1,10 @@
-use std::collections::HashSet;
-
 #[cfg(feature = "macros")]
 pub use local_fmt_macros as macros;
 
 #[derive(Debug, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum MessageFormat {
     Text(String),
+    StaticText(&'static str),
     Arg(usize),
 }
 
@@ -13,36 +12,58 @@ pub enum MessageFormat {
 #[derive(Debug, Clone)]
 pub struct ConstMessage<const N: usize>(Vec<MessageFormat>);
 
+#[derive(Debug, thiserror::Error)]
+pub enum ConstMessageError<const N: usize> {
+    #[error("invalid number: {0} (please 0 <= number < {N})")]
+    InvalidNumber(usize),
+    #[error("without number: {0} (not found in 0 <= number < {N})")]
+    WithoutNumber(usize),
+}
+
 impl<const N: usize> ConstMessage<N> {
-    pub fn new(formats: Vec<MessageFormat>) -> Result<Self, String> {
-        let mut numbers = HashSet::<usize>::with_capacity(N);
+    pub const fn const_check(
+        formats: &[MessageFormat],
+    ) -> Result<&[MessageFormat], ConstMessageError<N>> {
+        let mut numbers = [false; N];
 
-        for i in &formats {
-            if let MessageFormat::Arg(n) = i {
-                if *n >= N {
-                    return Err(format!("please set number between [0 and {})", N));
+        let mut current = 0;
+
+        while formats.len() > current {
+            if let MessageFormat::Arg(n) = formats[current] {
+                if n >= N {
+                    return Err(ConstMessageError::InvalidNumber(N));
                 }
-                numbers.insert(*n);
+                numbers[n] = true;
             }
+            current += 1;
         }
 
-        if numbers.len() != N {
-            return Err(format!("please set all numbers between [0 and {})", N));
+        let mut current = 0;
+
+        while numbers.len() > current {
+            if !numbers[current] {
+                return Err(ConstMessageError::WithoutNumber(current));
+            }
+            current += 1;
         }
 
-        for number in 0..N {
-            if !numbers.contains(&number) {
-                return Err(format!("please set all numbers between [0 and {})", N));
-            }
-        }
+        Ok(formats)
+    }
+
+    pub fn new(formats: Vec<MessageFormat>) -> Result<Self, ConstMessageError<N>> {
+        Self::const_check(&formats)?;
 
         Ok(Self(formats))
     }
 
     /// # Safety
     /// fill arg number by `[0, N)`
-    pub unsafe fn new_unchecked(formats: Vec<MessageFormat>) -> Self {
+    pub const unsafe fn new_unchecked(formats: Vec<MessageFormat>) -> Self {
         Self(formats)
+    }
+
+    pub const fn args_len(&self) -> usize {
+        N
     }
 
     pub fn format(&self, args: &[&str; N]) -> String {
@@ -52,6 +73,7 @@ impl<const N: usize> ConstMessage<N> {
             match i {
                 MessageFormat::Text(s) => text.push_str(s),
                 MessageFormat::Arg(n) => text.push_str(args[*n]),
+                MessageFormat::StaticText(s) => text.push_str(s),
             }
         }
 
@@ -125,6 +147,7 @@ impl serde::Serialize for MessageFormat {
         match self {
             MessageFormat::Text(text) => serializer.serialize_str(text),
             MessageFormat::Arg(num) => serializer.serialize_u64(*num as u64),
+            MessageFormat::StaticText(text) => serializer.serialize_str(text),
         }
     }
 }
@@ -132,15 +155,28 @@ impl serde::Serialize for MessageFormat {
 #[macro_export]
 macro_rules! gen_const_message {
      (@gen $text:literal) => {
-         $crate::MessageFormat::Text($text.to_string())
+         $crate::MessageFormat::StaticText($text)
      };
      (@gen {$number:literal}) => {
          $crate::MessageFormat::Arg($number)
      };
+     (@gen $text_expr:expr) => {
+         $crate::MessageFormat::StaticText($text_expr)
+     };
      (unchecked $($tt:tt),*) => {
          $crate::ConstMessage::new_unchecked(vec![$(gen_const_message!(@gen $tt)),*])
      };
-     ($($tt:tt),*) => {
-         $crate::ConstMessage::new(vec![$(gen_const_message!(@gen $tt)),*]).unwrap()
+     ($arg_number:literal, $($tt:tt),*) => {
+        unsafe {
+            $crate::ConstMessage::<$arg_number>::new_unchecked(
+                const {
+                    match $crate::ConstMessage::<$arg_number>::const_check(&[$($crate::gen_const_message!(@gen $tt)),*]) {
+                        Ok(ok) => ok,
+                        Err(_) => panic!("missing arg"),
+                    }
+                }
+                .to_vec(),
+            )
+        }
      }
  }
