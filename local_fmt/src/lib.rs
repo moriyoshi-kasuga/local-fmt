@@ -137,6 +137,9 @@ macro_rules! gen_const_message {
      (@gen {$number:literal}) => {
          $crate::MessageFormat::Arg($number)
      };
+     (unchecked $($tt:tt),*) => {
+         $crate::ConstMessage::new_unchecked(vec![$(gen_const_message!(@gen $tt)),*])
+     };
      ($($tt:tt),*) => {
          $crate::ConstMessage::new(vec![$(gen_const_message!(@gen $tt)),*]).unwrap()
      }
