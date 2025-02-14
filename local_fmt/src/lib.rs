@@ -3,14 +3,14 @@ use std::collections::HashSet;
 #[cfg(feature = "macros")]
 pub use local_fmt_macros as macros;
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum MessageFormat {
     Text(String),
     Arg(usize),
 }
 
 /// N is argument length
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ConstMessage<const N: usize>(Vec<MessageFormat>);
 
 impl<const N: usize> ConstMessage<N> {
