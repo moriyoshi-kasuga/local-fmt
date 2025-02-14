@@ -12,12 +12,11 @@ keywords.workspace = true
 
 [dependencies]
 local-fmt-macros = { version = "^0", path = "../local_fmt_macros", optional = true }
+serde = "1.0"
 
 [features]
 default = []
 macros = ["local-fmt-macros"]
-selected = ["local-fmt-macros?/selected"]
-global = ["local-fmt-macros?/global"]
 
 [lib]
 name = "local_fmt"

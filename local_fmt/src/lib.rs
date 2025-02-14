@@ -1,154 +1,125 @@
-pub mod enum_map;
-pub use enum_map::*;
-
 #[cfg(feature = "macros")]
 pub use local_fmt_macros as macros;
 
 #[derive(Debug)]
-pub struct LocalFmt<Lang: Enumable, Key: Enumable> {
-    pub locales: EnumableMap<Lang, EnumableMap<Key, &'static str>>,
-    #[cfg(feature = "selected")]
-    pub selected: Lang,
-    #[cfg(feature = "global")]
-    pub global: fn() -> Lang,
+pub enum MessageFormat {
+    Text(String),
+    Arg(usize),
 }
 
-impl<Lang: Enumable + Clone, Key: Enumable + Clone> Clone for LocalFmt<Lang, Key>
-where
-    Key::Array<&'static str>: Clone,
-    Lang::Array<EnumableMap<Key, &'static str>>: Clone,
-{
-    fn clone(&self) -> Self {
-        Self {
-            locales: self.locales.clone(),
-            #[cfg(feature = "selected")]
-            selected: self.selected.clone(),
-            #[cfg(feature = "global")]
-            global: self.global,
+/// N is argument length
+#[derive(Debug)]
+pub struct ConstMessage<const N: usize>(Vec<MessageFormat>);
+
+impl<const N: usize> ConstMessage<N> {
+    pub fn new(formats: Vec<MessageFormat>) -> Self {
+        Self(formats)
+    }
+
+    pub fn format(&self, args: &[&str; N]) -> String {
+        let mut text = String::new();
+
+        for i in &self.0 {
+            match i {
+                MessageFormat::Text(s) => text.push_str(s),
+                MessageFormat::Arg(n) => text.push_str(args[*n]),
+            }
+        }
+
+        text
+    }
+}
+
+impl<'de, const N: usize> serde::Deserialize<'de> for ConstMessage<N> {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let formats = Vec::<MessageFormat>::deserialize(deserializer)?;
+        for i in &formats {
+            if let MessageFormat::Arg(n) = i {
+                if *n >= N {
+                    return Err(serde::de::Error::custom(format!(
+                        "please set number between 0 and {} exclusive",
+                        N
+                    )));
+                }
+            }
+        }
+
+        if formats.len() != N {
+            return Err(serde::de::Error::custom(format!(
+                "please set {} arguments",
+                N
+            )));
+        }
+
+        Ok(Self(formats))
+    }
+}
+
+impl<const N: usize> serde::Serialize for ConstMessage<N> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        self.0.serialize(serializer)
+    }
+}
+
+impl<'de> serde::Deserialize<'de> for MessageFormat {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        struct Visitor;
+
+        impl serde::de::Visitor<'_> for Visitor {
+            type Value = MessageFormat;
+
+            fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+                formatter.write_str("allow string or number")
+            }
+
+            fn visit_u64<E>(self, v: u64) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                Ok(MessageFormat::Arg(v as usize))
+            }
+
+            fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                Ok(MessageFormat::Text(v.to_string()))
+            }
+        }
+        deserializer.deserialize_string(Visitor)
+    }
+}
+
+impl serde::Serialize for MessageFormat {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        match self {
+            MessageFormat::Text(text) => serializer.serialize_str(text),
+            MessageFormat::Arg(num) => serializer.serialize_u64(*num as u64),
         }
     }
 }
 
-impl<Lang: Enumable + Copy, Key: Enumable> LocalFmt<Lang, Key> {
-    #[cfg(not(any(feature = "selected", feature = "global")))]
-    pub fn new(locales: EnumableMap<Lang, EnumableMap<Key, &'static str>>) -> Self {
-        Self { locales }
-    }
-
-    #[cfg(all(feature = "selected", not(feature = "global")))]
-    pub fn new(locales: EnumableMap<Lang, EnumableMap<Key, &'static str>>, selected: Lang) -> Self {
-        Self { locales, selected }
-    }
-
-    #[cfg(all(not(feature = "selected"), feature = "global"))]
-    pub fn new(
-        locales: EnumableMap<Lang, EnumableMap<Key, &'static str>>,
-        global: fn() -> Lang,
-    ) -> Self {
-        Self { locales, global }
-    }
-
-    #[cfg(all(feature = "selected", feature = "global"))]
-    pub fn new(
-        locales: EnumableMap<Lang, EnumableMap<Key, &'static str>>,
-        selected: Lang,
-        global: fn() -> Lang,
-    ) -> Self {
-        Self {
-            locales,
-            selected,
-            global,
-        }
-    }
-
-    #[cfg(feature = "global")]
-    #[inline]
-    pub fn f(&self, key: Key, args: &[(&str, &str)]) -> String {
-        self.format((self.global)(), key, args)
-    }
-
-    #[cfg(feature = "selected")]
-    #[inline]
-    pub fn fmt(&self, key: Key, args: &[(&str, &str)]) -> String {
-        self.format(self.selected, key, args)
-    }
-
-    #[allow(clippy::panic)]
-    pub fn format(&self, lang: Lang, key: Key, args: &[(&str, &str)]) -> String {
-        replace_args(self.locales[lang][key], args)
-    }
-}
-
-pub fn replace_args(text: &'static str, args: &[(&str, &str)]) -> String {
-    let args = args.iter();
-    let input_bytes = text.as_bytes();
-    let mut output = Vec::<u8>::with_capacity(input_bytes.len() + 64);
-    let mut input_bytes = input_bytes.iter();
-
-    let mut inner = false;
-
-    let mut buffer = Vec::<u8>::new();
-
-    while let Some(i) = input_bytes.next() {
-        match *i {
-            b'}' if inner => {
-                let key_s = unsafe { core::str::from_utf8_unchecked(&buffer) };
-                match args.clone().find(|(key, _)| *key == key_s) {
-                    Some((_, value)) => {
-                        output.extend(value.as_bytes());
-                    }
-                    None => output.extend(&[b"%{", buffer.as_slice(), b" is not binded}"].concat()),
-                };
-                inner = false;
-            }
-            _ if inner => {
-                buffer.push(*i);
-            }
-            b'%' => match match input_bytes.next() {
-                Some(i) => i,
-                None => break,
-            } {
-                b'%' => {
-                    output.push(b'%');
-                }
-                b'{' => inner = true,
-                v => {
-                    output.extend(&[b'%', *v]);
-                }
-            },
-            _ => {
-                output.push(*i);
-            }
-        };
-    }
-
-    unsafe { String::from_utf8_unchecked(output) }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    #[test]
-    fn normal_replace_args() {
-        assert_eq!(
-            replace_args("Hello, %{world}", &[("world", "World!")]),
-            "Hello, World!"
-        );
-    }
-
-    #[test]
-    fn escape_replace_args() {
-        assert_eq!(
-            replace_args("Hello, %%{world}", &[("world", "World!")]),
-            "Hello, %{world}"
-        );
-    }
-
-    #[test]
-    fn no_bind_replace_args() {
-        assert_eq!(
-            replace_args("Hello, %{world}", &[]),
-            "Hello, %{world is not binded}"
-        );
-    }
-}
+#[macro_export]
+macro_rules! gen_const_message {
+     (@gen $text:literal) => {
+         $crate::MessageFormat::Text($text.to_string())
+     };
+     (@gen {$number:literal}) => {
+         $crate::MessageFormat::Arg($number)
+     };
+     ($($tt:tt),*) => {
+         $crate::ConstMessage::new(vec![$(gen_const_message!(@gen $tt)),*])
+     }
+ }
