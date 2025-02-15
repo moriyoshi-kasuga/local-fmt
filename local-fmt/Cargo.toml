@@ -11,12 +11,12 @@ categories.workspace = true
 keywords.workspace = true
 
 [dependencies]
-local-fmt-macros = { version = "^0", path = "../local-fmt-macros", optional = true }
-local-fmt-internal.workspace = true
+serde = "1.0"
+thiserror = "2.0"
 
-[features]
-default = []
-macros = ["local-fmt-macros"]
+[dev-dependencies]
+serde = { version = "1.0", features = ["derive"] }
+toml = "0.8"
 
 [lib]
 name = "local_fmt"

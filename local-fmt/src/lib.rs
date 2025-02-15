@@ -1,10 +1,8 @@
-pub use local_fmt_internal::*;
+pub mod message;
+pub use message::*;
 
 use std::collections::HashMap;
 use std::hash::Hash;
-
-#[cfg(feature = "macros")]
-pub use local_fmt_macros as macros;
 
 pub struct LocalFmt<L, M> {
     messages: HashMap<L, M>,

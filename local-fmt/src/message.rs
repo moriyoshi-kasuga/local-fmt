@@ -125,6 +125,16 @@ impl<'de> serde::Deserialize<'de> for MessageFormat {
                 Ok(MessageFormat::Arg(v as usize))
             }
 
+            fn visit_i64<E>(self, v: i64) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                if v < 0 {
+                    return Err(serde::de::Error::custom("please positive number"));
+                }
+                Ok(MessageFormat::Arg(v as usize))
+            }
+
             fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
             where
                 E: serde::de::Error,

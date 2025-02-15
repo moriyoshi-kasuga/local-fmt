@@ -1,7 +1,8 @@
 use std::{collections::HashMap, sync::RwLock};
 
-use local_fmt::{gen_const_message, ConstMessage, LocalFmt};
+use local_fmt::{ConstMessage, LocalFmt};
 
+#[derive(serde::Deserialize)]
 pub struct Messages {
     pub hello: ConstMessage<1>,
 }
@@ -13,24 +14,14 @@ pub enum Lang {
     EN,
 }
 
-#[allow(clippy::unwrap_used)]
+static LANG: RwLock<Lang> = RwLock::new(Lang::JA);
+
+#[allow(clippy::unwrap_used, clippy::print_stdout)]
 fn main() {
-    let mut messages = HashMap::new();
-    messages.insert(
-        Lang::JA,
-        Messages {
-            hello: gen_const_message!(1, "こんにちは ", { 0 }, " さん"),
-        },
-    );
+    let mut messages: HashMap<Lang, Messages> = HashMap::new();
 
-    messages.insert(
-        Lang::EN,
-        Messages {
-            hello: gen_const_message!(1, "hello ", { 0 }),
-        },
-    );
-
-    static LANG: RwLock<Lang> = RwLock::new(Lang::JA);
+    messages.insert(Lang::JA, toml::from_str(include_str!("./ja.toml")).unwrap());
+    messages.insert(Lang::EN, toml::from_str(include_str!("./en.toml")).unwrap());
 
     let local = LocalFmt::new(messages, || *LANG.read().unwrap());
 
@@ -38,6 +29,7 @@ fn main() {
         let message = local.get_message().hello.format(&["mori"]);
 
         assert_eq!(message, "こんにちは mori さん");
+        println!("{}", message);
     }
 
     *LANG.write().unwrap() = Lang::EN;
@@ -45,6 +37,7 @@ fn main() {
     {
         let message = local.get_message().hello.format(&["mori"]);
 
-        assert_eq!(message, "hello mori");
+        assert_eq!(message, "Hello mori!");
+        println!("{}", message);
     }
 }
