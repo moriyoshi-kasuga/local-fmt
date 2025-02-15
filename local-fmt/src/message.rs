@@ -170,7 +170,7 @@ macro_rules! gen_const_message {
      (@gen $text_expr:expr) => {
          $crate::MessageFormat::StaticText($text_expr)
      };
-     (unchecked $($tt:tt),*) => {
+     (unchecked, $($tt:tt),*) => {
          $crate::ConstMessage::new_unchecked(vec![$(gen_const_message!(@gen $tt)),*])
      };
      ($arg_number:literal, $($tt:tt),*) => {

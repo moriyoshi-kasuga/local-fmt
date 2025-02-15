@@ -2,7 +2,7 @@ use local_fmt::{gen_const_message, ConstMessage};
 
 #[test]
 fn test_unchecked() {
-    let _: ConstMessage<1> = unsafe { gen_const_message!(unchecked "Hello! ", { 0 }, { 99 }) };
+    let _: ConstMessage<1> = unsafe { gen_const_message!(unchecked, "Hello! ", { 0 }, { 99 }) };
 }
 
 #[test]
