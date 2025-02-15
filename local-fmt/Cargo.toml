@@ -11,9 +11,8 @@ categories.workspace = true
 keywords.workspace = true
 
 [dependencies]
-local-fmt-macros = { version = "^0", path = "../local_fmt_macros", optional = true }
-serde = "1.0"
-thiserror = "2.0"
+local-fmt-macros = { version = "^0", path = "../local-fmt-macros", optional = true }
+local-fmt-internal.workspace = true
 
 [features]
 default = []
