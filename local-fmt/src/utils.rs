@@ -1,6 +1,6 @@
 use std::{error::Error, io::Read, path::Path};
 
-pub trait MessagesUtil: serde::de::DeserializeOwned {
+pub trait LoadFileUtil: serde::de::DeserializeOwned {
     fn load_from_file<P, E>(
         deserializer: fn(&str) -> Result<Self, E>,
         path: P,

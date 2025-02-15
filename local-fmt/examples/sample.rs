@@ -1,13 +1,13 @@
 use std::{collections::HashMap, sync::RwLock};
 
-use local_fmt::{ConstMessage, LocalFmt, MessagesUtil};
+use local_fmt::{ConstMessage, LocalFmt, LoadFileUtil};
 
 #[derive(serde::Deserialize)]
 pub struct Messages {
     pub hello: ConstMessage<1>,
 }
 
-impl MessagesUtil for Messages {}
+impl LoadFileUtil for Messages {}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u8)]
