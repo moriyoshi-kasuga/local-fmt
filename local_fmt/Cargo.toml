@@ -24,3 +24,7 @@ name = "local_fmt"
 
 [lints]
 workspace = true
+
+[[example]]
+name = "sample"
+path = "examples/sample.rs"
