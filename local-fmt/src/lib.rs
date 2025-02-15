@@ -1,6 +1,9 @@
 pub mod message;
 pub use message::*;
 
+pub mod utils;
+pub use utils::*;
+
 use std::collections::HashMap;
 use std::hash::Hash;
 

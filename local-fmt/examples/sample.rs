@@ -1,17 +1,20 @@
 use std::{collections::HashMap, sync::RwLock};
 
-use local_fmt::{ConstMessage, LocalFmt};
+use local_fmt::{ConstMessage, LocalFmt, MessagesUtil};
 
 #[derive(serde::Deserialize)]
 pub struct Messages {
     pub hello: ConstMessage<1>,
 }
 
+impl MessagesUtil for Messages {}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u8)]
 pub enum Lang {
     JA,
     EN,
+    Other,
 }
 
 static LANG: RwLock<Lang> = RwLock::new(Lang::JA);
@@ -20,8 +23,14 @@ static LANG: RwLock<Lang> = RwLock::new(Lang::JA);
 fn main() {
     let mut messages: HashMap<Lang, Messages> = HashMap::new();
 
-    messages.insert(Lang::JA, toml::from_str(include_str!("./ja.toml")).unwrap());
-    messages.insert(Lang::EN, toml::from_str(include_str!("./en.toml")).unwrap());
+    messages.insert(
+        Lang::JA,
+        Messages::load_from_file(toml::from_str, "./local-fmt/examples/ja.toml").unwrap(),
+    );
+    messages.insert(
+        Lang::EN,
+        Messages::load_from_file(toml::from_str, "./local-fmt/examples/en.toml").unwrap(),
+    );
 
     let local = LocalFmt::new(messages, || *LANG.read().unwrap());
 
