@@ -11,7 +11,6 @@ fn test_1() {
 }
 
 #[test]
-#[should_panic]
 fn test_2() {
     let _ = gen_const_message!(2, "Hello! ", { 0 }, " World!", { 1 });
 }
