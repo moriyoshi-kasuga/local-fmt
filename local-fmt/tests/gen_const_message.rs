@@ -6,6 +6,14 @@ fn test_unchecked() {
 }
 
 #[test]
+#[should_panic]
+fn test_unchecked_panic() {
+    let message: ConstMessage<1> =
+        unsafe { gen_const_message!(unchecked, "Hello! ", { 0 }, { 99 }) };
+    message.format(&["World!"]);
+}
+
+#[test]
 fn test_1() {
     let _ = gen_const_message!(1, "Hello! ", { 0 });
 }
