@@ -169,7 +169,14 @@ macro_rules! gen_const_message {
                 const {
                     match $crate::ConstMessage::<$arg_number>::const_check(&[$($crate::gen_const_message!(@gen $tt)),*]) {
                         Ok(ok) => ok,
-                        Err(_) => panic!("missing arg"),
+                        Err(err) => match err {
+                            $crate::ConstMessageError::InvalidNumber(_) => {
+                                panic!("has invalid number arg")
+                            },
+                            $crate::ConstMessageError::WithoutNumber(_) => {
+                                panic!("has without number arg")
+                            },
+                        },
                     }
                 }
                 .to_vec(),
