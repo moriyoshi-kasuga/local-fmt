@@ -1,6 +1,6 @@
 use std::{collections::HashMap, sync::RwLock};
 
-use local_fmt::{ConstMessage, LocalFmt, LoadFileUtil};
+use local_fmt::{ConstMessage, LoadFileUtil, LocalFmt};
 
 #[derive(serde::Deserialize)]
 pub struct Messages {
@@ -14,7 +14,6 @@ impl LoadFileUtil for Messages {}
 pub enum Lang {
     JA,
     EN,
-    Other,
 }
 
 static LANG: RwLock<Lang> = RwLock::new(Lang::JA);

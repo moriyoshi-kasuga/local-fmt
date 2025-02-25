@@ -1,15 +1,14 @@
-use local_fmt::{gen_const_message, ConstMessage};
+use local_fmt::gen_const_message;
 
 #[test]
 fn test_unchecked() {
-    let _: ConstMessage<1> = unsafe { gen_const_message!(unchecked, "Hello! ", { 0 }, { 99 }) };
+    let _ = unsafe { gen_const_message!(unchecked, 1, "Hello! ", { 0 }, { 99 }) };
 }
 
 #[test]
-#[should_panic]
+#[should_panic = "index out of bounds: the len is 1 but the index is 99"]
 fn test_unchecked_panic() {
-    let message: ConstMessage<1> =
-        unsafe { gen_const_message!(unchecked, "Hello! ", { 0 }, { 99 }) };
+    let message = unsafe { gen_const_message!(unchecked, 1, "Hello! ", { 0 }, { 99 }) };
     message.format(&["World!"]);
 }
 

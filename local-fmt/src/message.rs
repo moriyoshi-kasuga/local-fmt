@@ -9,7 +9,7 @@ pub enum MessageFormat {
 #[derive(Debug, Clone)]
 pub struct ConstMessage<const N: usize>(Vec<MessageFormat>);
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, thiserror::Error, PartialEq, Eq)]
 pub enum ConstMessageError<const N: usize> {
     #[error("invalid number: {0} (please 0 <= number < {N})")]
     InvalidNumber(usize),
@@ -28,7 +28,7 @@ impl<const N: usize> ConstMessage<N> {
         while formats.len() > current {
             if let MessageFormat::Arg(n) = formats[current] {
                 if n >= N {
-                    return Err(ConstMessageError::InvalidNumber(N));
+                    return Err(ConstMessageError::InvalidNumber(n));
                 }
                 numbers[n] = true;
             }
@@ -159,6 +159,7 @@ impl serde::Serialize for MessageFormat {
     }
 }
 
+// compiletime check macro
 #[macro_export]
 macro_rules! gen_const_message {
      (@gen $text:literal) => {
@@ -167,11 +168,11 @@ macro_rules! gen_const_message {
      (@gen {$number:literal}) => {
          $crate::MessageFormat::Arg($number)
      };
-     (@gen $text_expr:expr) => {
-         $crate::MessageFormat::StaticText($text_expr)
+     (@gen $($text_tt:tt)*) => {
+         $crate::MessageFormat::StaticText($($text_tt)*)
      };
-     (unchecked, $($tt:tt),*) => {
-         $crate::ConstMessage::new_unchecked(vec![$(gen_const_message!(@gen $tt)),*])
+     (unchecked, $arg_number:literal, $($tt:tt),*) => {
+         $crate::ConstMessage::<$arg_number>::new_unchecked(vec![$(gen_const_message!(@gen $tt)),*])
      };
      ($arg_number:literal, $($tt:tt),*) => {
         unsafe {
@@ -192,5 +193,25 @@ macro_rules! gen_const_message {
                 .to_vec(),
             )
         }
+     }
+ }
+
+// useable string macro
+#[macro_export]
+macro_rules! gen_message {
+     (@gen $text:literal) => {
+         $crate::MessageFormat::StaticText($text)
+     };
+     (@gen {$number:literal}) => {
+         $crate::MessageFormat::Arg($number)
+     };
+     (@gen $($text_tt:tt)*) => {
+         $crate::MessageFormat::Text($($text_tt)*)
+     };
+     (unchecked, $arg_number:literal, $($tt:tt),*) => {
+         $crate::ConstMessage::<$arg_number>::new_unchecked(vec![$(gen_message!(@gen $tt)),*])
+     };
+     ($arg_number:literal, $($tt:tt),*) => {
+         $crate::ConstMessage::<$arg_number>::new(vec![$(gen_message!(@gen $tt)),*])
      }
  }

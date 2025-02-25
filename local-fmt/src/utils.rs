@@ -46,7 +46,7 @@ pub trait LoadFileUtil: serde::de::DeserializeOwned {
         let mut text = String::new();
         file.read_to_string(&mut text)?;
 
-        deserializer(&text).map_err(Into::into)
+        deserializer(&text)
     }
 
     fn load_from_file_and_merge<P, E>(
@@ -68,6 +68,6 @@ pub trait LoadFileUtil: serde::de::DeserializeOwned {
         let mut text = String::new();
         file.read_to_string(&mut text)?;
 
-        merge(value, &text).map_err(Into::into)
+        merge(value, &text)
     }
 }
