@@ -19,5 +19,6 @@ fn test_1() {
 
 #[test]
 fn test_2() {
-    let _ = gen_const_message!(2, "Hello! ", { 0 }, " World!", { 1 });
+    const HELLO: &str = "Hello!";
+    let _ = gen_const_message!(2, HELLO, { 0 }, " World!", { 1 });
 }

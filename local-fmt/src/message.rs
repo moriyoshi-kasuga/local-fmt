@@ -168,8 +168,8 @@ macro_rules! gen_const_message {
      (@gen {$number:literal}) => {
          $crate::MessageFormat::Arg($number)
      };
-     (@gen $($text_tt:tt)*) => {
-         $crate::MessageFormat::StaticText($($text_tt)*)
+     (@gen $ident:ident) => {
+         $crate::MessageFormat::StaticText($ident)
      };
      (unchecked, $arg_number:literal, $($tt:tt),*) => {
          $crate::ConstMessage::<$arg_number>::new_unchecked(vec![$(gen_const_message!(@gen $tt)),*])
@@ -205,8 +205,8 @@ macro_rules! gen_message {
      (@gen {$number:literal}) => {
          $crate::MessageFormat::Arg($number)
      };
-     (@gen $($text_tt:tt)*) => {
-         $crate::MessageFormat::Text($($text_tt)*)
+     (@gen $ident:ident) => {
+         $crate::MessageFormat::Text($ident)
      };
      (unchecked, $arg_number:literal, $($tt:tt),*) => {
          $crate::ConstMessage::<$arg_number>::new_unchecked(vec![$(gen_message!(@gen $tt)),*])

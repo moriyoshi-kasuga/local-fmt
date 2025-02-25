@@ -20,6 +20,7 @@ fn test_1() {
 
 #[test]
 fn test_2() {
-    let result = gen_message!(2, "hey", { 0 }, " World!", { 99 });
+    let hey = String::from("hey");
+    let result = gen_message!(2, hey, { 0 }, " World!", { 99 });
     assert_eq!(result.unwrap_err(), ConstMessageError::InvalidNumber(99))
 }
