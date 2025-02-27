@@ -13,6 +13,7 @@ keywords.workspace = true
 [dependencies]
 serde = "1.0"
 thiserror = "2.0"
+enum-table = "0.1"
 
 [dev-dependencies]
 serde = { version = "1.0", features = ["derive"] }

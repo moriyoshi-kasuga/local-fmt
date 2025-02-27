@@ -1,5 +1,6 @@
-use std::{collections::HashMap, sync::RwLock};
+use std::sync::RwLock;
 
+use enum_table::{EnumTable, Enumable};
 use local_fmt::{ConstMessage, LoadFileUtil, LocalFmt};
 
 #[derive(serde::Deserialize)]
@@ -9,7 +10,7 @@ pub struct Messages {
 
 impl LoadFileUtil for Messages {}
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Enumable)]
 #[repr(u8)]
 pub enum Lang {
     JA,
@@ -20,16 +21,15 @@ static LANG: RwLock<Lang> = RwLock::new(Lang::JA);
 
 #[allow(clippy::unwrap_used, clippy::print_stdout)]
 fn main() {
-    let mut messages: HashMap<Lang, Messages> = HashMap::new();
-
-    messages.insert(
-        Lang::JA,
-        Messages::load_from_file(toml::from_str, "./local-fmt/examples/ja.toml").unwrap(),
-    );
-    messages.insert(
-        Lang::EN,
-        Messages::load_from_file(toml::from_str, "./local-fmt/examples/en.toml").unwrap(),
-    );
+    let messages: EnumTable<Lang, Messages, { Lang::COUNT }> =
+        EnumTable::new_with_fn(|lang| match lang {
+            Lang::JA => {
+                Messages::load_from_file(toml::from_str, "./local-fmt/examples/ja.toml").unwrap()
+            }
+            Lang::EN => {
+                Messages::load_from_file(toml::from_str, "./local-fmt/examples/en.toml").unwrap()
+            }
+        });
 
     let local = LocalFmt::new(messages, || *LANG.read().unwrap());
 
