@@ -18,6 +18,20 @@ pub enum ConstMessageError<const N: usize> {
 }
 
 impl<const N: usize> ConstMessage<N> {
+    pub const fn const_check_and_panic(formats: &[MessageFormat]) -> &[MessageFormat] {
+        match Self::const_check(formats) {
+            Ok(ok) => ok,
+            Err(err) => match err {
+                ConstMessageError::InvalidNumber(_) => {
+                    panic!("has invalid number arg")
+                }
+                ConstMessageError::WithoutNumber(_) => {
+                    panic!("has without number arg")
+                }
+            },
+        }
+    }
+
     pub const fn const_check(
         formats: &[MessageFormat],
     ) -> Result<&[MessageFormat], ConstMessageError<N>> {
@@ -171,6 +185,9 @@ macro_rules! gen_const_message {
      (@gen $ident:ident) => {
          $crate::MessageFormat::StaticText($ident)
      };
+     (@gen $expr:expr) => {
+         $crate::MessageFormat::StaticText($expr)
+     };
      (unchecked, $arg_number:literal, $($tt:tt),*) => {
          $crate::ConstMessage::<$arg_number>::new_unchecked(vec![$(gen_const_message!(@gen $tt)),*])
      };
@@ -178,17 +195,9 @@ macro_rules! gen_const_message {
         unsafe {
             $crate::ConstMessage::<$arg_number>::new_unchecked(
                 const {
-                    match $crate::ConstMessage::<$arg_number>::const_check(&[$($crate::gen_const_message!(@gen $tt)),*]) {
-                        Ok(ok) => ok,
-                        Err(err) => match err {
-                            $crate::ConstMessageError::InvalidNumber(_) => {
-                                panic!("has invalid number arg")
-                            },
-                            $crate::ConstMessageError::WithoutNumber(_) => {
-                                panic!("has without number arg")
-                            },
-                        },
-                    }
+                    $crate::ConstMessage::<$arg_number>::const_check_and_panic(
+                        &[$($crate::gen_const_message!(@gen $tt)),*]
+                    )
                 }
                 .to_vec(),
             )
@@ -207,6 +216,9 @@ macro_rules! gen_message {
      };
      (@gen $ident:ident) => {
          $crate::MessageFormat::Text($ident)
+     };
+     (@gen $expr:expr) => {
+         $crate::MessageFormat::Text($expr)
      };
      (unchecked, $arg_number:literal, $($tt:tt),*) => {
          $crate::ConstMessage::<$arg_number>::new_unchecked(vec![$(gen_message!(@gen $tt)),*])
