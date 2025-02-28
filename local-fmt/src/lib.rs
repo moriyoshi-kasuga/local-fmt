@@ -1,4 +1,6 @@
 pub mod message;
+use std::ops::Deref;
+
 use enum_table::{EnumTable, Enumable};
 pub use message::*;
 
@@ -28,5 +30,13 @@ impl<L: Enumable, M, const N: usize> LocalFmt<L, M, N> {
                 self.messages.get(&lang)
             }
         }
+    }
+}
+
+impl<L: Enumable, M, const N: usize> Deref for LocalFmt<L, M, N> {
+    type Target = M;
+
+    fn deref(&self) -> &Self::Target {
+        self.get_message()
     }
 }

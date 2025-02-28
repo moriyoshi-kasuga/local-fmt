@@ -34,7 +34,7 @@ fn main() {
     let local = LocalFmt::new(messages, LangSupplier::Dynamic(|| *LANG.read().unwrap()));
 
     {
-        let message = local.get_message().hello.format(&["mori"]);
+        let message = local.hello.format(&["mori"]);
 
         assert_eq!(message, "こんにちは mori さん");
         println!("{}", message);
@@ -43,7 +43,7 @@ fn main() {
     *LANG.write().unwrap() = Lang::EN;
 
     {
-        let message = local.get_message().hello.format(&["mori"]);
+        let message = local.hello.format(&["mori"]);
 
         assert_eq!(message, "Hello mori!");
         println!("{}", message);
