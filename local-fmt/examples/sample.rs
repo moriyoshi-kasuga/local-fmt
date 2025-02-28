@@ -1,7 +1,7 @@
 use std::sync::RwLock;
 
 use enum_table::{EnumTable, Enumable};
-use local_fmt::{ConstMessage, LoadFileUtil, LocalFmt};
+use local_fmt::{ConstMessage, LangSupplier, LoadFileUtil, LocalFmt};
 
 #[derive(serde::Deserialize)]
 pub struct Messages {
@@ -31,7 +31,7 @@ fn main() {
             }
         });
 
-    let local = LocalFmt::new(messages, || *LANG.read().unwrap());
+    let local = LocalFmt::new(messages, LangSupplier::Dynamic(|| *LANG.read().unwrap()));
 
     {
         let message = local.get_message().hello.format(&["mori"]);

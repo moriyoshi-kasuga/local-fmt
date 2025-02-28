@@ -5,19 +5,28 @@ pub use message::*;
 pub mod utils;
 pub use utils::*;
 
-use std::hash::Hash;
+pub enum LangSupplier<L> {
+    Static(L),
+    Dynamic(fn() -> L),
+}
 
 pub struct LocalFmt<L: Enumable, M, const N: usize> {
     messages: EnumTable<L, M, N>,
-    global: fn() -> L,
+    lang: LangSupplier<L>,
 }
 
-impl<L: Eq + Hash + Enumable, M, const N: usize> LocalFmt<L, M, N> {
-    pub fn new(messages: EnumTable<L, M, N>, global: fn() -> L) -> Self {
-        Self { messages, global }
+impl<L: Enumable, M, const N: usize> LocalFmt<L, M, N> {
+    pub fn new(messages: EnumTable<L, M, N>, lang: LangSupplier<L>) -> Self {
+        Self { messages, lang }
     }
 
     pub fn get_message(&self) -> &M {
-        self.messages.get(&(self.global)())
+        match &self.lang {
+            LangSupplier::Static(lang) => self.messages.get(lang),
+            LangSupplier::Dynamic(f) => {
+                let lang = f();
+                self.messages.get(&lang)
+            }
+        }
     }
 }
