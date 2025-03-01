@@ -1,9 +1,9 @@
-pub mod message;
-use std::ops::Deref;
-
 use enum_table::{EnumTable, Enumable};
+
+pub mod message;
 pub use message::*;
 
+mod macros;
 
 #[cfg(feature = "derive")]
 pub use local_fmt_derive::def_local_fmt;
@@ -34,7 +34,7 @@ impl<L: Enumable, M, const N: usize> LocalFmt<L, M, N> {
     }
 }
 
-impl<L: Enumable, M, const N: usize> Deref for LocalFmt<L, M, N> {
+impl<L: Enumable, M, const N: usize> std::ops::Deref for LocalFmt<L, M, N> {
     type Target = M;
 
     fn deref(&self) -> &Self::Target {
