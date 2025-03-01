@@ -191,7 +191,7 @@ macro_rules! gen_const_message {
      (unchecked, $arg_number:literal, $($tt:tt),*) => {
          $crate::ConstMessage::<$arg_number>::new_unchecked(vec![$(gen_const_message!(@gen $tt)),*])
      };
-     ($arg_number:literal, $($tt:tt),*) => {
+     ($arg_number:literal, $($tt:tt),* $(,)?) => {
         unsafe {
             $crate::ConstMessage::<$arg_number>::new_unchecked(
                 const {
@@ -220,10 +220,10 @@ macro_rules! gen_message {
      (@gen $expr:expr) => {
          $crate::MessageFormat::Text($expr)
      };
-     (unchecked, $arg_number:literal, $($tt:tt),*) => {
+     (unchecked, $arg_number:literal, $($tt:tt),* $(,)?) => {
          $crate::ConstMessage::<$arg_number>::new_unchecked(vec![$(gen_message!(@gen $tt)),*])
      };
-     ($arg_number:literal, $($tt:tt),*) => {
+     ($arg_number:literal, $($tt:tt),* $(,)?) => {
          $crate::ConstMessage::<$arg_number>::new(vec![$(gen_message!(@gen $tt)),*])
      }
  }
