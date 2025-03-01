@@ -9,7 +9,10 @@ pub enum MessageFormat {
 
 /// N is argument length
 #[derive(Debug, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ConstMessage<const N: usize>(Vec<MessageFormat>);
+pub enum ConstMessage<const N: usize> {
+    Vec(Vec<MessageFormat>),
+    Static(&'static [MessageFormat]),
+}
 
 #[derive(Debug, Clone, thiserror::Error, PartialEq, Eq)]
 pub enum ConstMessageError {
@@ -20,8 +23,8 @@ pub enum ConstMessageError {
 }
 
 impl<const N: usize> ConstMessage<N> {
-    pub const fn const_check_and_panic(formats: &[MessageFormat]) -> &[MessageFormat] {
-        match Self::const_check(formats) {
+    pub const fn new_static(formats: &'static [MessageFormat]) -> Self {
+        let formats = match Self::const_check(formats) {
             Ok(ok) => ok,
             Err(err) => match err {
                 ConstMessageError::InvalidNumber { .. } => {
@@ -31,7 +34,9 @@ impl<const N: usize> ConstMessage<N> {
                     panic!("has without number arg")
                 }
             },
-        }
+        };
+
+        Self::Static(formats)
     }
 
     pub const fn const_check(
@@ -69,13 +74,7 @@ impl<const N: usize> ConstMessage<N> {
     pub fn new(formats: Vec<MessageFormat>) -> Result<Self, ConstMessageError> {
         Self::const_check(&formats)?;
 
-        Ok(Self(formats))
-    }
-
-    /// # Safety
-    /// fill arg number by `0 <= n < N`
-    pub const unsafe fn new_unchecked(formats: Vec<MessageFormat>) -> Self {
-        Self(formats)
+        Ok(Self::Vec(formats))
     }
 
     pub const fn args_len(&self) -> usize {
@@ -85,7 +84,7 @@ impl<const N: usize> ConstMessage<N> {
     pub fn format(&self, args: &[&str; N]) -> String {
         let mut text = String::new();
 
-        for i in &self.0 {
+        for i in self.as_ref() {
             match i {
                 MessageFormat::Text(s) => text.push_str(s),
                 MessageFormat::Arg(n) => text.push_str(args[*n]),
@@ -97,9 +96,18 @@ impl<const N: usize> ConstMessage<N> {
     }
 }
 
+impl<const N: usize> AsRef<[MessageFormat]> for ConstMessage<N> {
+    fn as_ref(&self) -> &[MessageFormat] {
+        match self {
+            Self::Vec(v) => v.as_ref(),
+            Self::Static(v) => v,
+        }
+    }
+}
+
 impl<const N: usize> Display for ConstMessage<N> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        for i in &self.0 {
+        for i in self.as_ref() {
             match i {
                 MessageFormat::Text(s) => write!(f, "{}", s)?,
                 MessageFormat::Arg(n) => write!(f, "{{{}}}", n)?,

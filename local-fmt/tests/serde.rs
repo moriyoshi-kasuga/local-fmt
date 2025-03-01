@@ -9,7 +9,7 @@ struct Test {
 
 #[test]
 fn ser() {
-    let message = gen_const_message!(1, "Hello! ", { 0 });
+    let message = gen_const_message!("Hello! ", { 0 });
     let test = Test { hello: message };
     let text = toml::to_string(&test).unwrap();
     assert_eq!(text, "hello = \"Hello! {0}\"\n");
@@ -20,12 +20,10 @@ fn de() {
     let text = "hello = 'Hello! {0}'";
     let test: Test = toml::from_str(text).unwrap();
 
-    let text = unsafe {
-        ConstMessage::<1>::new_unchecked(vec![
-            MessageFormat::Text("Hello! ".to_string()),
-            MessageFormat::Arg(0),
-        ])
-    };
+    let text = ConstMessage::<1>::Vec(vec![
+        MessageFormat::Text("Hello! ".to_string()),
+        MessageFormat::Arg(0),
+    ]);
 
     assert_eq!(test.hello, text);
 }

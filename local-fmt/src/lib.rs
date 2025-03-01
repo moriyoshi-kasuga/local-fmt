@@ -22,7 +22,7 @@ pub struct LocalFmt<L: Enumable, M, const N: usize> {
 }
 
 impl<L: Enumable, M, const N: usize> LocalFmt<L, M, N> {
-    pub fn new(messages: EnumTable<L, M, N>, lang: LangSupplier<L>) -> Self {
+    pub const fn new(messages: EnumTable<L, M, N>, lang: LangSupplier<L>) -> Self {
         Self { messages, lang }
     }
 

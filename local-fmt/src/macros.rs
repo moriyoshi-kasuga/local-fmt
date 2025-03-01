@@ -13,20 +13,13 @@ macro_rules! gen_const_message {
      (@gen $expr:expr) => {
          $crate::MessageFormat::StaticText($expr)
      };
-     (unchecked, $arg_number:literal, $($tt:tt),*) => {
-         $crate::ConstMessage::<$arg_number>::new_unchecked(vec![$(gen_const_message!(@gen $tt)),*])
+     (unchecked, $($tt:tt),*) => {
+         $crate::ConstMessage::Static(&[$(gen_const_message!(@gen $tt)),*])
      };
-     ($arg_number:literal, $($tt:tt),* $(,)?) => {
-        unsafe {
-            $crate::ConstMessage::<$arg_number>::new_unchecked(
-                const {
-                    $crate::ConstMessage::<$arg_number>::const_check_and_panic(
-                        &[$($crate::gen_const_message!(@gen $tt)),*]
-                    )
-                }
-                .to_vec(),
-            )
-        }
+     ($($tt:tt),* $(,)?) => {
+        const {$crate::ConstMessage::new_static(
+            &[$($crate::gen_const_message!(@gen $tt)),*]
+        )}
      }
  }
 
@@ -45,10 +38,10 @@ macro_rules! gen_message {
      (@gen $expr:expr) => {
          $crate::MessageFormat::Text($expr)
      };
-     (unchecked, $arg_number:literal, $($tt:tt),* $(,)?) => {
-         $crate::ConstMessage::<$arg_number>::new_unchecked(vec![$(gen_message!(@gen $tt)),*])
+     (unchecked, $($tt:tt),* $(,)?) => {
+         $crate::ConstMessage::Vec(vec![$(gen_message!(@gen $tt)),*])
      };
-     ($arg_number:literal, $($tt:tt),* $(,)?) => {
-         $crate::ConstMessage::<$arg_number>::new(vec![$(gen_message!(@gen $tt)),*])
+     ($($tt:tt),* $(,)?) => {
+         $crate::ConstMessage::new(vec![$(gen_message!(@gen $tt)),*])
      }
  }
