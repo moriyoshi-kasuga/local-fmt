@@ -10,11 +10,11 @@ pub enum MessageFormat {
 pub struct ConstMessage<const N: usize>(Vec<MessageFormat>);
 
 #[derive(Debug, thiserror::Error, PartialEq, Eq)]
-pub enum ConstMessageError<const N: usize> {
-    #[error("invalid number: {0} (please 0 <= number < {N})")]
-    InvalidNumber(usize),
-    #[error("without number: {0} (not found in 0 <= number < {N})")]
-    WithoutNumber(usize),
+pub enum ConstMessageError {
+    #[error("invalid number: {number} (please 0 <= number < {n})")]
+    InvalidNumber { number: usize, n: usize },
+    #[error("without number: {number} (not found in 0 <= number < {n})")]
+    WithoutNumber { number: usize, n: usize },
 }
 
 impl<const N: usize> ConstMessage<N> {
@@ -22,10 +22,10 @@ impl<const N: usize> ConstMessage<N> {
         match Self::const_check(formats) {
             Ok(ok) => ok,
             Err(err) => match err {
-                ConstMessageError::InvalidNumber(_) => {
+                ConstMessageError::InvalidNumber { .. } => {
                     panic!("has invalid number arg")
                 }
-                ConstMessageError::WithoutNumber(_) => {
+                ConstMessageError::WithoutNumber { .. } => {
                     panic!("has without number arg")
                 }
             },
@@ -34,7 +34,7 @@ impl<const N: usize> ConstMessage<N> {
 
     pub const fn const_check(
         formats: &[MessageFormat],
-    ) -> Result<&[MessageFormat], ConstMessageError<N>> {
+    ) -> Result<&[MessageFormat], ConstMessageError> {
         let mut numbers = [false; N];
 
         let mut current = 0;
@@ -42,7 +42,7 @@ impl<const N: usize> ConstMessage<N> {
         while formats.len() > current {
             if let MessageFormat::Arg(n) = formats[current] {
                 if n >= N {
-                    return Err(ConstMessageError::InvalidNumber(n));
+                    return Err(ConstMessageError::InvalidNumber { number: n, n: N });
                 }
                 numbers[n] = true;
             }
@@ -53,7 +53,10 @@ impl<const N: usize> ConstMessage<N> {
 
         while numbers.len() > current {
             if !numbers[current] {
-                return Err(ConstMessageError::WithoutNumber(current));
+                return Err(ConstMessageError::WithoutNumber {
+                    number: current,
+                    n: N,
+                });
             }
             current += 1;
         }
@@ -61,7 +64,7 @@ impl<const N: usize> ConstMessage<N> {
         Ok(formats)
     }
 
-    pub fn new(formats: Vec<MessageFormat>) -> Result<Self, ConstMessageError<N>> {
+    pub fn new(formats: Vec<MessageFormat>) -> Result<Self, ConstMessageError> {
         Self::const_check(&formats)?;
 
         Ok(Self(formats))
