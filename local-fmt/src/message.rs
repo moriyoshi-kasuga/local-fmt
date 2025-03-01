@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 #[derive(Debug, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum MessageFormat {
     Text(String),
@@ -6,10 +8,10 @@ pub enum MessageFormat {
 }
 
 /// N is argument length
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ConstMessage<const N: usize>(Vec<MessageFormat>);
 
-#[derive(Debug, thiserror::Error, PartialEq, Eq)]
+#[derive(Debug, Clone, thiserror::Error, PartialEq, Eq)]
 pub enum ConstMessageError {
     #[error("invalid number: {number} (please 0 <= number < {n})")]
     InvalidNumber { number: usize, n: usize },
@@ -71,7 +73,7 @@ impl<const N: usize> ConstMessage<N> {
     }
 
     /// # Safety
-    /// fill arg number by `[0, N)`
+    /// fill arg number by `0 <= n < N`
     pub const unsafe fn new_unchecked(formats: Vec<MessageFormat>) -> Self {
         Self(formats)
     }
@@ -92,6 +94,73 @@ impl<const N: usize> ConstMessage<N> {
         }
 
         text
+    }
+}
+
+impl<const N: usize> FromStr for ConstMessage<N> {
+    type Err = ConstMessageError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let mut formats = Vec::<MessageFormat>::new();
+
+        let mut buffer = Vec::<u8>::new();
+
+        let mut bytes = s.bytes();
+
+        while let Some(byte) = bytes.next() {
+            match byte {
+                b'{' => {
+                    formats.push(MessageFormat::Text(unsafe {
+                        String::from_utf8_unchecked(std::mem::take(&mut buffer))
+                    }));
+
+                    let mut number = 0;
+
+                    loop {
+                        match bytes.next() {
+                            Some(byte) => match byte {
+                                b'}' => {
+                                    formats.push(MessageFormat::Arg(number));
+                                    break;
+                                }
+                                b'0'..=b'9' => {
+                                    number *= 10;
+                                    number += (byte - b'0') as usize;
+                                }
+                                _ => {
+                                    return Err(ConstMessageError::InvalidNumber { number, n: N });
+                                }
+                            },
+                            None => {
+                                return Err(ConstMessageError::WithoutNumber { number, n: N });
+                            }
+                        }
+                    }
+                }
+                b'\\' => {
+                    if let Some(byte) = bytes.next() {
+                        match byte {
+                            b'{' => buffer.push(b'{'),
+                            _ => {
+                                buffer.push(b'\\');
+                                buffer.push(byte);
+                            }
+                        }
+                    } else {
+                        buffer.push(b'\\');
+                    }
+                }
+                _ => buffer.push(byte),
+            }
+        }
+
+        if !buffer.is_empty() {
+            formats.push(MessageFormat::Text(unsafe {
+                String::from_utf8_unchecked(buffer)
+            }));
+        }
+
+        Self::new(formats)
     }
 }
 

@@ -14,11 +14,15 @@ fn test_unchecked_panic() {
 
 #[test]
 fn test_1() {
-    let _ = gen_const_message!(1, "Hello! ", { 0 });
+    let message = gen_const_message!(1, "Hello! ", { 0 });
+    let text = message.format(&["World!"]);
+    assert_eq!(text, "Hello! World!");
 }
 
 #[test]
 fn test_2() {
-    const HELLO: &str = "Hello!";
-    let _ = gen_const_message!(2, HELLO, { 0 }, " World!", { 1 });
+    const HELLO: &str = "Hello";
+    let message = gen_const_message!(2, HELLO, " ", { 0 }, " World! ", { 1 });
+    let text = message.format(&["Beautiful", "Rust!"]);
+    assert_eq!(text, "Hello Beautiful World! Rust!");
 }

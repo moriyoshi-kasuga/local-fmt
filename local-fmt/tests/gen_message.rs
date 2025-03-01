@@ -14,8 +14,9 @@ fn test_unchecked_panic() {
 
 #[test]
 fn test_1() {
-    let result = gen_message!(1, "Hello! ", { 0 });
-    assert!(result.is_ok());
+    let result = gen_message!(1, "Hello! ", { 0 }).unwrap();
+    let text = result.format(&["World!"]);
+    assert_eq!(text, "Hello! World!");
 }
 
 #[test]
