@@ -5,6 +5,9 @@ pub use message::*;
 
 mod macros;
 
+#[cfg(feature = "serde")]
+mod serde;
+
 #[cfg(feature = "derive")]
 pub use local_fmt_derive::def_local_fmt;
 
