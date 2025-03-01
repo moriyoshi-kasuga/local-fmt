@@ -1,11 +1,16 @@
+#![cfg(feature = "derive")]
+
 use std::sync::RwLock;
 
 use enum_table::{EnumTable, Enumable};
-use local_fmt::{ConstMessage, LangSupplier, LoadFileUtil, LocalFmt};
+use local_fmt::{
+    def_local_fmt, gen_const_message, ConstMessage, LangSupplier, LoadFileUtil, LocalFmt,
+};
 
 #[derive(serde::Deserialize)]
 pub struct Messages {
     pub hello: ConstMessage<1>,
+    pub goodbye: ConstMessage<1>,
 }
 
 impl LoadFileUtil for Messages {}
@@ -19,13 +24,22 @@ pub enum Lang {
 
 static LANG: RwLock<Lang> = RwLock::new(Lang::JA);
 
+// def_local_fmt!(
+//     name = WORDS,
+//     lang = Lang,
+//     message = Messages,
+//     supplier = LangSupplier::Dynamic(|| *LANG.read().unwrap()),
+//     lang_folder = ".",
+// );
+
 #[allow(clippy::unwrap_used, clippy::print_stdout)]
 fn main() {
     let messages: EnumTable<Lang, Messages, { Lang::COUNT }> =
         EnumTable::new_with_fn(|lang| match lang {
-            Lang::JA => {
-                Messages::load_from_file(toml::from_str, "./local-fmt/examples/ja.toml").unwrap()
-            }
+            Lang::JA => Messages {
+                hello: gen_const_message!(1, "こんにちは", { 0 }, "さん",),
+                goodbye: gen_const_message!(1, "さようなら", { 0 }),
+            },
             Lang::EN => {
                 Messages::load_from_file(toml::from_str, "./local-fmt/examples/en.toml").unwrap()
             }

@@ -7,6 +7,9 @@ pub use message::*;
 pub mod utils;
 pub use utils::*;
 
+#[cfg(feature = "derive")]
+pub use local_fmt_derive::def_local_fmt;
+
 pub enum LangSupplier<L> {
     Static(L),
     Dynamic(fn() -> L),
