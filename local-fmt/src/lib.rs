@@ -4,8 +4,6 @@ use std::ops::Deref;
 use enum_table::{EnumTable, Enumable};
 pub use message::*;
 
-pub mod utils;
-pub use utils::*;
 
 #[cfg(feature = "derive")]
 pub use local_fmt_derive::def_local_fmt;

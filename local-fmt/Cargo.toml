@@ -23,7 +23,6 @@ local-fmt-derive = { version = "^0", path = "../local-fmt-derive" }
 [dev-dependencies]
 serde = { version = "1.0", features = ["derive"] }
 toml = "0.8"
-serde-toml-merge = "0.3"
 
 [lib]
 name = "local_fmt"
