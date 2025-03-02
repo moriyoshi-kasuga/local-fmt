@@ -42,7 +42,7 @@ fn main() {
     let lang = match lang.as_str() {
         "EN" => Lang::EN,
         "JA" => Lang::JA,
-        _ => panic!("Invalid lang"),
+        _ => panic!("Invalid lang, expected EN or JA"),
     };
     let user = std::env::args().nth(2).expect("Please specify user");
 
