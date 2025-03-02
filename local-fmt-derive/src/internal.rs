@@ -9,8 +9,14 @@ pub(crate) fn generate(args: crate::args::Args) -> syn::Result<TokenStream> {
     let parseable = messages.into_iter().map(|m| m.parseable(&lang, &message));
     let token = quote::quote! {
         pub const #name: local_fmt::LocalFmt<#lang, #message, {<#lang as enum_table::Enumable>::COUNT}> = {
+            use local_fmt::{check_const_message_arg, gen_const_message, ConstMessage, derive::CheckConstMessageArg};
+
             let messages = enum_table::et!(#lang, #message, |lang| match lang {
-                #(#parseable,)*
+                #(
+                    #parseable,
+                )*
+                #[allow(unreachable_patterns, clippy::panic)]
+                _ => panic!("Not filled all languages"),
             });
             local_fmt::LocalFmt::new(messages, #supplier)
         };

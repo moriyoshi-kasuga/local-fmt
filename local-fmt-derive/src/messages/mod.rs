@@ -1,8 +1,8 @@
 #![allow(clippy::panic)]
 
-use std::{borrow::Cow, path::Path};
+use std::path::Path;
 
-use arg::LangMessage;
+use arg::{LangMessage, MessageValue};
 
 use crate::args::ArgPath;
 
@@ -82,7 +82,89 @@ fn internal(file_path: &Path, lang: &str, value: toml::Value) -> Vec<arg::Messag
             ),
         };
 
-        todo!()
+        let mut max_placeholder = 0;
+
+        let mut value = Vec::new();
+
+        let mut buffer = Vec::<u8>::new();
+
+        let mut bytes = text.bytes();
+
+        while let Some(byte) = bytes.next() {
+            match byte {
+                b'{' => {
+                    value.push(MessageValue::Text(unsafe {
+                        String::from_utf8_unchecked(std::mem::take(&mut buffer))
+                    }));
+
+                    let mut number = 0;
+
+                    loop {
+                        match bytes.next() {
+                            Some(byte) => match byte {
+                                b'}' => {
+                                    max_placeholder = max_placeholder.max(number);
+                                    value.push(MessageValue::Placeholder(number));
+                                    break;
+                                }
+                                b'0'..=b'9' => {
+                                    number *= 10;
+                                    number += (byte - b'0') as usize;
+                                }
+                                _ => {
+                                    panic!("invalid number in {} for {}", file_path.display(), name)
+                                }
+                            },
+                            None => {
+                                panic!("without number placeholder in {} for {}", file_path.display(), name)
+                            }
+                        }
+                    }
+                }
+                b'\\' => {
+                    if let Some(byte) = bytes.next() {
+                        match byte {
+                            b'{' => buffer.push(b'{'),
+                            _ => {
+                                buffer.push(b'\\');
+                                buffer.push(byte);
+                            }
+                        }
+                    } else {
+                        buffer.push(b'\\');
+                    }
+                }
+                _ => buffer.push(byte),
+            }
+        }
+
+        {
+            let mut numbers = vec![false; max_placeholder + 1];
+            for v in &value {
+                if let MessageValue::Placeholder(number) = v {
+                    numbers[*number] = true;
+                }
+            }
+            for (i, v) in numbers.iter().enumerate() {
+                if !v {
+                    panic!(
+                        "Placeholder index {} is missing in message '{}' for language '{}'. The highest index found is {}.",
+                        i, name, lang, max_placeholder
+                    );
+                }
+            }
+        }
+
+        if !buffer.is_empty() {
+            value.push(MessageValue::Text(unsafe {
+                String::from_utf8_unchecked(buffer)
+            }));
+        }
+
+        messages.push(arg::Message {
+            name,
+            values: value,
+        });
     }
     messages
 }

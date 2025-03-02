@@ -19,7 +19,8 @@ impl syn::parse::Parse for Args {
             syn::custom_keyword!(name);
             syn::custom_keyword!(lang);
             syn::custom_keyword!(message);
-            syn::custom_keyword!(supplier);
+            syn::custom_keyword!(static_supplier);
+            syn::custom_keyword!(dynamic_supplier);
             syn::custom_keyword!(lang_file);
             syn::custom_keyword!(lang_folder);
         }
@@ -29,31 +30,50 @@ impl syn::parse::Parse for Args {
                 parse!($ident, syn::Ident);
             };
             ($ident:ident, $ty:ty) => {
+                parse!($ident, $ty, without_comma);
+                let _: syn::Token![,] = input.parse()?;
+            };
+            ($ident:ident, $ty:ty, without_comma) => {
                 let _: kw::$ident = input.parse()?;
                 let _: syn::Token![=] = input.parse()?;
                 let $ident: $ty = input.parse()?;
-                let _: syn::Token![,] = input.parse()?;
             };
         }
 
         parse!(name);
         parse!(lang);
         parse!(message);
-        parse!(supplier, syn::Expr);
+
+        let supplier = if input.peek(kw::static_supplier) {
+            parse!(static_supplier, syn::Expr);
+            syn::parse_quote!(local_fmt::LangSupplier::Static(#static_supplier))
+        } else if input.peek(kw::dynamic_supplier) {
+            parse!(dynamic_supplier, syn::Expr);
+            syn::parse_quote!(local_fmt::LangSupplier::Dynamic(#dynamic_supplier))
+        } else {
+            return Err(input.error("expected static_supplier or dynamic_supplier"));
+        };
+
+        #[allow(clippy::panic)]
+        let crate_root = std::env::var("CARGO_MANIFEST_DIR")
+            .unwrap_or_else(|_| panic!("failed to get CARGO_MANIFEST_DIR"));
+        let crate_root = PathBuf::from(crate_root);
 
         let path = if input.peek(kw::lang_file) {
-            parse!(lang_file, syn::LitStr);
+            parse!(lang_file, syn::LitStr, without_comma);
 
-            ArgPath::File(lang_file.value().into())
+            ArgPath::File(crate_root.join(lang_file.value()))
         } else if input.peek(kw::lang_folder) {
-            parse!(lang_folder, syn::LitStr);
+            parse!(lang_folder, syn::LitStr, without_comma);
 
-            ArgPath::Folder(lang_folder.value().into())
+            ArgPath::Folder(crate_root.join(lang_folder.value()))
         } else {
             return Err(input.error("expected lang_file or lang_folder"));
         };
 
-        let _ = input.parse::<syn::Token![,]>();
+        if input.peek(syn::Token![,]) {
+            let _ = input.parse::<syn::Token![,]>()?;
+        }
 
         Ok(Self {
             name,

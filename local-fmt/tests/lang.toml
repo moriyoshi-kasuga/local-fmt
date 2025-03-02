@@ -1,0 +1,5 @@
+[ja]
+hello = "こんにちは、世界！ {0}"
+
+[en]
+hello = "Hello, world! {0}"

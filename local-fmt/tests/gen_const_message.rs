@@ -27,3 +27,12 @@ fn test_2() {
     let text = message.format(&["Beautiful", "Rust!"]);
     assert_eq!(text, "Hello Beautiful World! Rust!");
 }
+
+#[test]
+fn duplicate_arg() {
+    const HELLO: &str = "Hello";
+    let message: ConstMessage<1> = gen_const_message!(HELLO, " ", { 0 }, " World! ", { 0 });
+
+    let text = message.format(&["Beautiful"]);
+    assert_eq!(text, "Hello Beautiful World! Beautiful");
+}
