@@ -1,0 +1,3 @@
+welcome = "exampleへようこそ！{0}"
+rust = "やあ {0}、Rustは素晴らしい！{1}もいいね。"
+goodbye = "さようなら {0}！"

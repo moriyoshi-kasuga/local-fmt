@@ -1,0 +1,3 @@
+welcome = "Welcome to the example! {0}"
+rust = "Hey {0}, Rust is awesome! {1} is good."
+goodbye = "Goodbye {0}!"

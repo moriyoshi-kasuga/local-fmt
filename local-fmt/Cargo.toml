@@ -31,3 +31,7 @@ name = "local_fmt"
 
 [lints]
 workspace = true
+
+[[example]]
+name = "basic"
+path = "examples/basic.rs"
