@@ -44,12 +44,12 @@ mod messages;
 /// hello = "こんにちは、世界！{0}"
 /// ```
 ///
-/// ## Example with `lang_folder = "lang"`
+/// ## Example with `lang_folder = "langs"`
 ///
 /// The folder should contain separate TOML files for each language:
 ///
 /// <pre>
-/// /lang
+/// /langs
 /// ├── EN.toml
 /// └── JA.toml
 /// </pre>
@@ -94,7 +94,7 @@ mod messages;
 ///     lang = Lang,
 ///     message = Messages,
 ///     dynamic_supplier = || *LANG.read().unwrap(),
-///     lang_folder = "test-lang"
+///     lang_folder = "doctest/langs"
 /// );
 ///
 /// assert_eq!(MESSAGES.hello.format(&["Rust"]), "Hello, world! Rust");
@@ -126,7 +126,7 @@ mod messages;
 ///         lang = Lang,
 ///         message = Messages,
 ///         static_supplier = Lang::EN,
-///         lang_file = "test-lang.toml"
+///         lang_file = "doctest/lang.toml"
 ///     );
 ///     MESSAGES
 /// });
