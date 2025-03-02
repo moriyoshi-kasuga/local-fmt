@@ -1,5 +1,6 @@
 use std::{fmt::Display, str::FromStr};
 
+/// Represents different formats a message can take.
 #[derive(Debug, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum MessageFormat {
     Text(String),
@@ -7,13 +8,13 @@ pub enum MessageFormat {
     Arg(usize),
 }
 
-/// N is argument length
 #[derive(Debug, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum ConstMessage<const N: usize> {
     Vec(Vec<MessageFormat>),
     Static(&'static [MessageFormat]),
 }
 
+/// Errors that can occur when working with constant messages.
 #[derive(Debug, Clone, thiserror::Error, PartialEq, Eq)]
 pub enum ConstMessageError {
     #[error("Invalid argument number: {number} is out of the allowed range (0 <= number < {n}).")]
@@ -23,6 +24,22 @@ pub enum ConstMessageError {
 }
 
 impl<const N: usize> ConstMessage<N> {
+    /// Creates a new static constant message, checking for argument validity.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the argument numbers are invalid or missing.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use local_fmt::message::{ConstMessage, MessageFormat};
+    ///
+    /// const FORMATS: &[MessageFormat] = &[MessageFormat::Arg(0), MessageFormat::StaticText(" world!")];
+    /// let message = ConstMessage::<1>::new_static(FORMATS);
+    ///
+    /// assert_eq!(message.format(&["Hello"]), "Hello world!");
+    /// ```
     pub const fn new_static(formats: &'static [MessageFormat]) -> Self {
         let formats = match Self::const_check(formats) {
             Ok(ok) => ok,
@@ -41,6 +58,23 @@ impl<const N: usize> ConstMessage<N> {
         Self::Static(formats)
     }
 
+    /// Checks the validity of the argument numbers in the message formats.
+    ///
+    /// Returns an error if any argument number is invalid or missing.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use local_fmt::message::{ConstMessage, MessageFormat, ConstMessageError};
+    ///
+    /// const FORMATS: &[MessageFormat] = &[MessageFormat::Arg(0)];
+    /// let result = ConstMessage::<1>::const_check(FORMATS);
+    /// assert!(result.is_ok());
+    ///
+    /// const MISS_FORMATS: &[MessageFormat] = &[MessageFormat::Arg(1)];
+    /// let result = ConstMessage::<2>::const_check(MISS_FORMATS);
+    /// assert_eq!(result, Err(ConstMessageError::WithoutNumber { number: 0, n: 2 }));
+    /// ```
     pub const fn const_check(
         formats: &[MessageFormat],
     ) -> Result<&[MessageFormat], ConstMessageError> {
@@ -73,16 +107,60 @@ impl<const N: usize> ConstMessage<N> {
         Ok(formats)
     }
 
+    /// Creates a new constant message from a vector of message formats.
+    ///
+    /// Returns an error if the argument numbers are invalid or missing.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use local_fmt::message::{ConstMessage, MessageFormat};
+    ///
+    /// let formats = vec![MessageFormat::Arg(0), MessageFormat::StaticText(" world!")];
+    /// let message = ConstMessage::<1>::new(formats).unwrap();
+    ///
+    /// assert_eq!(message.format(&["Hello"]), "Hello world!");
+    /// ```
     pub fn new(formats: Vec<MessageFormat>) -> Result<Self, ConstMessageError> {
         Self::const_check(&formats)?;
 
         Ok(Self::Vec(formats))
     }
 
+    /// Returns the number of arguments expected by the message.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use local_fmt::message::ConstMessage;
+    ///
+    /// let message = ConstMessage::<2>::Vec(vec![]);
+    /// assert_eq!(message.args_len(), 2);
+    /// ```
     pub const fn args_len(&self) -> usize {
         N
     }
 
+    /// Formats the message using the provided arguments.
+    ///
+    /// # Arguments
+    ///
+    /// * `args` - A slice of string references to be used as arguments in the message.
+    ///
+    /// # Returns
+    ///
+    /// A formatted string with the arguments inserted.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use local_fmt::message::{ConstMessage, MessageFormat};
+    ///
+    /// let formats = vec![MessageFormat::Arg(0), MessageFormat::StaticText(" world!")];
+    /// let message = ConstMessage::<1>::new(formats).unwrap();
+    /// let formatted = message.format(&["Hello"]);
+    /// assert_eq!(formatted, "Hello world!");
+    /// ```
     pub fn format(&self, args: &[&str; N]) -> String {
         let mut text = String::new();
 
@@ -99,6 +177,7 @@ impl<const N: usize> ConstMessage<N> {
 }
 
 impl<const N: usize> AsRef<[MessageFormat]> for ConstMessage<N> {
+    /// Returns a reference to the underlying message formats.
     fn as_ref(&self) -> &[MessageFormat] {
         match self {
             Self::Vec(v) => v.as_ref(),
@@ -108,6 +187,17 @@ impl<const N: usize> AsRef<[MessageFormat]> for ConstMessage<N> {
 }
 
 impl<const N: usize> Display for ConstMessage<N> {
+    /// Formats the message for display.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use local_fmt::message::{ConstMessage, MessageFormat};
+    ///
+    /// let formats = vec![MessageFormat::Arg(0), MessageFormat::StaticText(" world!")];
+    /// let message = ConstMessage::<1>::new(formats).unwrap();
+    /// assert_eq!(message.to_string(), "{0} world!");
+    /// ```
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         for i in self.as_ref() {
             match i {
@@ -124,6 +214,26 @@ impl<const N: usize> Display for ConstMessage<N> {
 impl<const N: usize> FromStr for ConstMessage<N> {
     type Err = ConstMessageError;
 
+    /// Parses a string into a constant message, extracting message formats.
+    ///
+    /// # Arguments
+    ///
+    /// * `s` - The string to parse into a constant message.
+    ///
+    /// # Returns
+    ///
+    /// A result containing the constant message or an error if parsing fails.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use local_fmt::message::{ConstMessage, MessageFormat};
+    /// use std::str::FromStr;
+    ///
+    /// let message = ConstMessage::<1>::from_str("{0} world!").unwrap();
+    /// let vec = vec![MessageFormat::Arg(0), MessageFormat::Text(" world!".to_string())];
+    /// assert_eq!(message, ConstMessage::<1>::new(vec).unwrap());
+    /// ```
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let mut formats = Vec::<MessageFormat>::new();
 
@@ -134,9 +244,11 @@ impl<const N: usize> FromStr for ConstMessage<N> {
         while let Some(byte) = bytes.next() {
             match byte {
                 b'{' => {
-                    formats.push(MessageFormat::Text(unsafe {
-                        String::from_utf8_unchecked(std::mem::take(&mut buffer))
-                    }));
+                    if !buffer.is_empty() {
+                        formats.push(MessageFormat::Text(unsafe {
+                            String::from_utf8_unchecked(std::mem::take(&mut buffer))
+                        }));
+                    }
 
                     let mut number = 0;
 

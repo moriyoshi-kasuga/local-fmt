@@ -30,3 +30,15 @@ fn test_2() {
         ConstMessageError::InvalidNumber { number: 99, n: 2 }
     );
 }
+
+#[test]
+fn test_3() {
+    let hey = String::from("hey");
+    let result: Result<ConstMessage<2>, ConstMessageError> =
+        gen_message!(hey, { 0 }, " World!", { 0 });
+
+    assert_eq!(
+        result.unwrap_err(),
+        ConstMessageError::WithoutNumber { number: 1, n: 2 }
+    );
+}
