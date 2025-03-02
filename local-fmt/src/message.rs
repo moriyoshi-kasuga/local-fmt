@@ -8,17 +8,90 @@ pub enum MessageFormat {
     Arg(usize),
 }
 
+/// Represents a constant message with a fixed number of arguments.
+///
+/// This enum allows for the creation and manipulation of messages that can
+/// contain static text, dynamic arguments, or a combination of both. The
+/// number of arguments is specified at compile time using a const generic
+/// parameter.
+///
+/// # Examples
+///
+/// ## Using the `gen_const_message` macro:
+///
+/// ```rust
+/// # use local_fmt::{ConstMessage, MessageFormat};
+/// use local_fmt::gen_const_message;
+///
+/// const MESSAGES: local_fmt::ConstMessage<1> = gen_const_message!({ 0 }, " world!");
+///
+/// assert_eq!(MESSAGES.format(&["Hello"]), "Hello world!");
+/// ```
+///
+/// ### Equivalent code not using `gen_const_message`
+///
+/// ```rust
+/// # use local_fmt::{ConstMessage, MessageFormat};
+///
+/// const MESSAGES: ConstMessage<1> = ConstMessage::new_static(&[
+///    MessageFormat::Arg(0),
+///    MessageFormat::StaticText(" world!"),
+/// ]);
+///
+/// assert_eq!(MESSAGES.format(&["Hello"]), "Hello world!");
+/// ```
+///
+/// ## Using the `gen_message` macro:
+///
+/// ```
+/// # use local_fmt::{ConstMessage, MessageFormat};
+/// use local_fmt::gen_message;
+///
+/// let world = "world!".to_string();
+///
+/// let message = gen_message!({0}, " ", world).unwrap();
+///
+/// assert_eq!(message.format(&["Hello"]), "Hello world!");
+/// ```
+///
+/// ### Equivalent code not using `gen_message`
+///
+/// ```rust
+/// # use local_fmt::{ConstMessage, MessageFormat};
+/// # use std::str::FromStr;
+///
+/// let world = "world!".to_string();
+/// let message = ConstMessage::<1>::Vec(vec![
+///    MessageFormat::Arg(0),
+///    MessageFormat::StaticText(" "),
+///    MessageFormat::Text(world),
+/// ]);
+///
+/// assert_eq!(message.format(&["Hello"]), "Hello world!");
+///
 #[derive(Debug, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum ConstMessage<const N: usize> {
     Vec(Vec<MessageFormat>),
     Static(&'static [MessageFormat]),
 }
 
-/// Errors that can occur when working with constant messages.
+/// Represents errors that can occur when working with constant messages.
+///
+/// This enum provides detailed error information for invalid or missing argument numbers
+/// in constant messages.
 #[derive(Debug, Clone, thiserror::Error, PartialEq, Eq)]
 pub enum ConstMessageError {
+    /// Error indicating that an argument number is out of the allowed range.
+    ///
+    /// This error occurs when an argument number is provided that is not within the valid range
+    /// of 0 to N-1, where N is the number of expected arguments.
     #[error("Invalid argument number: {number} is out of the allowed range (0 <= number < {n}).")]
     InvalidNumber { number: usize, n: usize },
+
+    /// Error indicating that a required argument number is missing.
+    ///
+    /// This error occurs when an expected argument number is not found within the valid range
+    /// of 0 to N-1, where N is the number of expected arguments.
     #[error("Missing argument number: {number} is not found within the allowed range (0 <= number < {n}).")]
     WithoutNumber { number: usize, n: usize },
 }
@@ -33,7 +106,7 @@ impl<const N: usize> ConstMessage<N> {
     /// # Examples
     ///
     /// ```
-    /// use local_fmt::message::{ConstMessage, MessageFormat};
+    /// # use local_fmt::message::{ConstMessage, MessageFormat};
     ///
     /// const FORMATS: &[MessageFormat] = &[MessageFormat::Arg(0), MessageFormat::StaticText(" world!")];
     /// let message = ConstMessage::<1>::new_static(FORMATS);
@@ -65,7 +138,7 @@ impl<const N: usize> ConstMessage<N> {
     /// # Examples
     ///
     /// ```
-    /// use local_fmt::message::{ConstMessage, MessageFormat, ConstMessageError};
+    /// # use local_fmt::message::{ConstMessage, MessageFormat, ConstMessageError};
     ///
     /// const FORMATS: &[MessageFormat] = &[MessageFormat::Arg(0)];
     /// let result = ConstMessage::<1>::const_check(FORMATS);
@@ -114,7 +187,7 @@ impl<const N: usize> ConstMessage<N> {
     /// # Examples
     ///
     /// ```
-    /// use local_fmt::message::{ConstMessage, MessageFormat};
+    /// # use local_fmt::message::{ConstMessage, MessageFormat};
     ///
     /// let formats = vec![MessageFormat::Arg(0), MessageFormat::StaticText(" world!")];
     /// let message = ConstMessage::<1>::new(formats).unwrap();
@@ -132,7 +205,7 @@ impl<const N: usize> ConstMessage<N> {
     /// # Examples
     ///
     /// ```
-    /// use local_fmt::message::ConstMessage;
+    /// # use local_fmt::message::ConstMessage;
     ///
     /// let message = ConstMessage::<2>::Vec(vec![]);
     /// assert_eq!(message.args_len(), 2);
@@ -154,7 +227,7 @@ impl<const N: usize> ConstMessage<N> {
     /// # Examples
     ///
     /// ```
-    /// use local_fmt::message::{ConstMessage, MessageFormat};
+    /// # use local_fmt::message::{ConstMessage, MessageFormat};
     ///
     /// let formats = vec![MessageFormat::Arg(0), MessageFormat::StaticText(" world!")];
     /// let message = ConstMessage::<1>::new(formats).unwrap();
@@ -192,7 +265,7 @@ impl<const N: usize> Display for ConstMessage<N> {
     /// # Examples
     ///
     /// ```
-    /// use local_fmt::message::{ConstMessage, MessageFormat};
+    /// # use local_fmt::message::{ConstMessage, MessageFormat};
     ///
     /// let formats = vec![MessageFormat::Arg(0), MessageFormat::StaticText(" world!")];
     /// let message = ConstMessage::<1>::new(formats).unwrap();
@@ -229,8 +302,8 @@ impl<const N: usize> FromStr for ConstMessage<N> {
     /// # Examples
     ///
     /// ```
-    /// use local_fmt::message::{ConstMessage, MessageFormat};
-    /// use std::str::FromStr;
+    /// # use local_fmt::message::{ConstMessage, MessageFormat};
+    /// # use std::str::FromStr;
     ///
     /// let message = ConstMessage::<1>::from_str("{0} world!").unwrap();
     /// let vec = vec![MessageFormat::Arg(0), MessageFormat::Text(" world!".to_string())];
