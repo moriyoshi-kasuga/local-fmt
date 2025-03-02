@@ -4,7 +4,7 @@ use std::path::Path;
 
 use arg::{LangMessage, MessageValue};
 
-use crate::args::ArgPath;
+use crate::internal_def_local_fmt::ArgPath;
 
 pub(crate) mod arg;
 
