@@ -25,10 +25,7 @@ pub(crate) fn generate(path: ArgPath) -> Vec<arg::LangMessage> {
             let mut lang_messages = Vec::new();
             for (lang, value) in table {
                 let messages = internal(file.as_path(), &lang, value);
-                lang_messages.push(LangMessage {
-                    lang: lang.to_ascii_uppercase(),
-                    messages,
-                });
+                lang_messages.push(LangMessage { lang, messages });
             }
             lang_messages
         }
@@ -64,7 +61,7 @@ pub(crate) fn generate(path: ArgPath) -> Vec<arg::LangMessage> {
                     .unwrap_or_else(|_| panic!("failed to parse toml in {}", path.display()));
                 let messages = internal(path.as_path(), &lang, toml);
                 lang_messages.push(LangMessage {
-                    lang: lang.to_string().to_ascii_uppercase(),
+                    lang: lang.to_string(),
                     messages,
                 });
             }
@@ -90,7 +87,7 @@ fn internal(file_path: &Path, lang: &str, value: toml::Value) -> Vec<arg::Messag
             ),
         };
 
-        let mut max_placeholder = 0;
+        let mut max_placeholder = None::<usize>;
 
         let mut value = Vec::new();
 
@@ -111,7 +108,14 @@ fn internal(file_path: &Path, lang: &str, value: toml::Value) -> Vec<arg::Messag
                         match bytes.next() {
                             Some(byte) => match byte {
                                 b'}' => {
-                                    max_placeholder = max_placeholder.max(number);
+                                    match max_placeholder {
+                                        Some(max) => {
+                                            max_placeholder = Some(max.max(number));
+                                        }
+                                        None => {
+                                            max_placeholder = Some(number);
+                                        }
+                                    }
                                     value.push(MessageValue::Placeholder(number));
                                     break;
                                 }
@@ -150,7 +154,7 @@ fn internal(file_path: &Path, lang: &str, value: toml::Value) -> Vec<arg::Messag
             }
         }
 
-        {
+        if let Some(max_placeholder) = max_placeholder {
             let mut numbers = vec![false; max_placeholder + 1];
             for v in &value {
                 if let MessageValue::Placeholder(number) = v {

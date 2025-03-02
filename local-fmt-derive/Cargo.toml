@@ -20,5 +20,9 @@ proc-macro2 = "1.0"
 quote = "1.0"
 toml = "0.8"
 
+[dev-dependencies]
+local-fmt = { path = "../local-fmt", features = ["derive"] }
+enum-table = "0.2"
+
 [lints]
 workspace = true

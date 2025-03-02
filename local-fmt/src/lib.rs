@@ -9,6 +9,7 @@ mod macros;
 mod serde;
 
 #[cfg(feature = "derive")]
+#[doc(inline)]
 pub use local_fmt_derive::def_local_fmt;
 #[cfg(feature = "derive")]
 pub mod derive;
