@@ -17,7 +17,10 @@ pub(crate) fn generate(path: ArgPath) -> Vec<arg::LangMessage> {
                 .unwrap_or_else(|_| panic!("failed to parse toml in {}", file.display()));
             let table = match toml {
                 toml::Value::Table(table) => table,
-                _ => panic!("expected table in {}", file.display()),
+                _ => panic!(
+                    "Expected a table structure in the TOML file: {}",
+                    file.display()
+                ),
             };
             let mut lang_messages = Vec::new();
             for (lang, value) in table {
@@ -30,18 +33,23 @@ pub(crate) fn generate(path: ArgPath) -> Vec<arg::LangMessage> {
             lang_messages
         }
         ArgPath::Folder(folder) => {
-            let files = folder
-                .read_dir()
-                .unwrap_or_else(|_| panic!("failed to read {}", folder.display()));
+            let files = folder.read_dir().unwrap_or_else(|_| {
+                panic!(
+                    "Failed to read directory entry in folder: {}",
+                    folder.display()
+                )
+            });
             let mut lang_messages = Vec::new();
             for entry in files {
                 let entry = entry
                     .unwrap_or_else(|_| panic!("failed to read entry in {}", folder.display()));
                 let path = entry.path();
-                if path
-                    .extension()
-                    .unwrap_or_else(|| panic!("failed to get extension in {}", path.display()))
-                    != "toml"
+                if path.extension().unwrap_or_else(|| {
+                    panic!(
+                        "Failed to retrieve file extension for path: {}",
+                        path.display()
+                    )
+                }) != "toml"
                 {
                     continue;
                 }
@@ -112,11 +120,15 @@ fn internal(file_path: &Path, lang: &str, value: toml::Value) -> Vec<arg::Messag
                                     number += (byte - b'0') as usize;
                                 }
                                 _ => {
-                                    panic!("invalid number in {} for {}", file_path.display(), name)
+                                    panic!("Missing closing brace for placeholder in message '{}' within file: {}", name, file_path.display())
                                 }
                             },
                             None => {
-                                panic!("without number placeholder in {} for {}", file_path.display(), name)
+                                panic!(
+                                    "without number placeholder in {} for {}",
+                                    file_path.display(),
+                                    name
+                                )
                             }
                         }
                     }

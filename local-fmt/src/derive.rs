@@ -17,7 +17,10 @@ impl<const M: usize> CheckConstMessageArg<M> {
 
 #[macro_export]
 macro_rules! check_const_message_arg {
-    ($lang:expr, $value:expr, $count:literal, $($arg:tt)*) => {
-        CheckConstMessageArg::check::<$count>(concat!("mismatch count of arguments in ",$lang," ",$value," message"),gen_const_message!($($arg)*))
+    ($lang:expr, $key:expr, $count:literal, $($arg:tt)*) => {
+        CheckConstMessageArg::check::<$count>(
+            concat!("Mismatch in the number of arguments for the message in language '", $lang, "' with key '", $key, "'."),
+            gen_const_message!($($arg)*)
+        )
     };
 }

@@ -16,9 +16,9 @@ pub enum ConstMessage<const N: usize> {
 
 #[derive(Debug, Clone, thiserror::Error, PartialEq, Eq)]
 pub enum ConstMessageError {
-    #[error("invalid number: {number} (please 0 <= number < {n})")]
+    #[error("Invalid argument number: {number} is out of the allowed range (0 <= number < {n}).")]
     InvalidNumber { number: usize, n: usize },
-    #[error("without number: {number} (not found in 0 <= number < {n})")]
+    #[error("Missing argument number: {number} is not found within the allowed range (0 <= number < {n}).")]
     WithoutNumber { number: usize, n: usize },
 }
 
@@ -26,14 +26,16 @@ impl<const N: usize> ConstMessage<N> {
     pub const fn new_static(formats: &'static [MessageFormat]) -> Self {
         let formats = match Self::const_check(formats) {
             Ok(ok) => ok,
-            Err(err) => match err {
-                ConstMessageError::InvalidNumber { .. } => {
-                    panic!("has invalid number arg")
+            Err(err) => {
+                match err {
+                    ConstMessageError::InvalidNumber { .. } => {
+                        panic!("Invalid argument number: the provided number is out of the allowed range.")
+                    }
+                    ConstMessageError::WithoutNumber { .. } => {
+                        panic!("Argument number missing: not all required argument numbers are present.")
+                    }
                 }
-                ConstMessageError::WithoutNumber { .. } => {
-                    panic!("has without number arg")
-                }
-            },
+            }
         };
 
         Self::Static(formats)
