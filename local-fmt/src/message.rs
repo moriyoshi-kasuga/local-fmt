@@ -219,6 +219,8 @@ impl<const N: usize> FromStr for ConstMessage<N> {
     /// # Arguments
     ///
     /// * `s` - The string to parse into a constant message.
+    ///         The string can contain arguments in the form of `{n}` where `n` is the argument number.
+    ///         To escape the `{` character, use `\\{`.
     ///
     /// # Returns
     ///
@@ -232,6 +234,11 @@ impl<const N: usize> FromStr for ConstMessage<N> {
     ///
     /// let message = ConstMessage::<1>::from_str("{0} world!").unwrap();
     /// let vec = vec![MessageFormat::Arg(0), MessageFormat::Text(" world!".to_string())];
+    /// assert_eq!(message, ConstMessage::<1>::new(vec).unwrap());
+    ///
+    /// // Escaping the `{` character
+    /// let message = ConstMessage::<1>::from_str("{0} \\{0} world!").unwrap();
+    /// let vec = vec![MessageFormat::Arg(0), MessageFormat::Text(" {0} world!".to_string())];
     /// assert_eq!(message, ConstMessage::<1>::new(vec).unwrap());
     /// ```
     fn from_str(s: &str) -> Result<Self, Self::Err> {
