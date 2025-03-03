@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use syn::{parse::Parse, Ident};
 
 pub(crate) enum MessageTokenValue {
@@ -21,20 +23,10 @@ pub(crate) struct MessageToken {
     values: Vec<MessageTokenValue>,
 }
 
-impl Parse for MessageToken {
-    fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
-        let mut values = Vec::new();
+impl FromStr for MessageToken {
+    type Err = syn::Error;
 
-        let mut cursor = input.cursor();
-        while !cursor.eof() {
-            #[allow(clippy::unwrap_used)]
-            let (tree, next) = cursor.token_tree().unwrap();
-            cursor = next;
-
-            // match tree {
-            // }
-        }
-
-        Ok(Self { values })
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        todo!();
     }
 }
