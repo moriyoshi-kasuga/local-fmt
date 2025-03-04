@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["local-fmt", "local-fmt-derive"]
+members = ["local-fmt", "local-fmt-macros"]
 
 [workspace.package]
 version = "0.3.0"

@@ -1,5 +1,5 @@
 [package]
-name = "local-fmt-derive"
+name = "local-fmt-macros"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -23,7 +23,7 @@ quote = "1.0"
 toml = "0.8"
 
 [dev-dependencies]
-local-fmt = { path = "../local-fmt", features = ["derive"] }
+local-fmt = { path = "../local-fmt", features = ["macros"] }
 enum-table = "0.2"
 
 [lints]
