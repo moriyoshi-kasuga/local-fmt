@@ -3,16 +3,14 @@ use enum_table::{EnumTable, Enumable};
 pub mod message;
 pub use message::*;
 
-mod macros;
-
 #[cfg(feature = "serde")]
 mod serde;
 
-#[cfg(feature = "derive")]
+#[cfg(feature = "macros")]
 #[doc(inline)]
-pub use local_fmt_derive::def_local_fmt;
-#[cfg(feature = "derive")]
-pub mod derive;
+pub use local_fmt_macros::def_local_fmt;
+#[cfg(feature = "macros")]
+pub mod macros;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum LangSupplier<L: Copy> {
