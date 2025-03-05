@@ -1,5 +1,6 @@
 use std::str::FromStr;
 
+use proc_macro2::TokenStream;
 use syn::Ident;
 
 pub(crate) enum MessageTokenValue {
@@ -9,6 +10,42 @@ pub(crate) enum MessageTokenValue {
     // in const, it's expected to be a &'static str
     // in not const, it's expected to be a String
     PlaceholderIdent(Ident),
+}
+
+impl MessageTokenValue {
+    fn to_token_stream(&self, ident_placeholder: fn(&Ident) -> TokenStream) -> TokenStream {
+        match self {
+            MessageTokenValue::StaticText(s) => {
+                let s = s.as_str();
+                quote::quote! {
+                    local_fmt::MessageFormat::StaticText(#s),
+                }
+            }
+            MessageTokenValue::PlaceholderArg(n) => {
+                let n = *n;
+                quote::quote! {
+                    local_fmt::MessageFormat::Arg(#n),
+                }
+            }
+            MessageTokenValue::PlaceholderIdent(ident) => ident_placeholder(ident),
+        }
+    }
+
+    pub(crate) fn to_alloc_token_stream(&self) -> TokenStream {
+        self.to_token_stream(|ident| {
+            quote::quote! {
+                local_fmt::MessageFormat::Text(#ident),
+            }
+        })
+    }
+
+    pub(crate) fn to_static_token_stream(&self) -> TokenStream {
+        self.to_token_stream(|ident| {
+            quote::quote! {
+                local_fmt::MessageFormat::StaticText(#ident),
+            }
+        })
+    }
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -22,7 +59,8 @@ pub(crate) enum MessageTokenValueError {
 }
 
 pub(crate) struct MessageToken {
-    values: Vec<MessageTokenValue>,
+    pub values: Vec<MessageTokenValue>,
+    pub placeholder_count: usize,
 }
 
 impl MessageToken {
@@ -49,7 +87,43 @@ impl MessageToken {
             }
         }
 
-        Ok(Self { values })
+        Ok(Self {
+            values,
+            placeholder_count: max.unwrap_or(0),
+        })
+    }
+
+    pub(crate) fn to_vec_token_stream(&self) -> TokenStream {
+        let count = self.placeholder_count;
+        let values = self
+            .values
+            .iter()
+            .map(|v| v.to_alloc_token_stream())
+            .collect::<Vec<TokenStream>>();
+
+        quote::quote! {
+            local_fmt::ConstMessage::<#count>::Vec(vec![
+                #(
+                    #values
+                )*
+            ]);
+        }
+    }
+    pub(crate) fn to_static_token_stream(&self) -> TokenStream {
+        let count = self.placeholder_count;
+        let values = self
+            .values
+            .iter()
+            .map(|v| v.to_static_token_stream())
+            .collect::<Vec<TokenStream>>();
+
+        quote::quote! {
+            local_fmt::ConstMessage::<#count>::Static(&[
+                #(
+                    #values
+                )*
+            ]);
+        }
     }
 }
 

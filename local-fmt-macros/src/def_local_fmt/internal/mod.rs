@@ -1,6 +1,8 @@
-use std::path::Path;
+use std::{path::Path, str::FromStr};
 
-use arg::LangMessage;
+use arg::{LangMessage, Message};
+
+use crate::parse::{MessageToken, MessageTokenValue};
 
 use super::arg::ArgPath;
 
@@ -85,99 +87,23 @@ fn internal(file_path: &Path, lang: &str, value: toml::Value) -> Vec<arg::Messag
             ),
         };
 
-        let mut max_placeholder = None::<usize>;
-
-        let mut value = Vec::new();
-
-        let mut buffer = Vec::<u8>::new();
-
-        let mut bytes = text.bytes();
-
-        while let Some(byte) = bytes.next() {
-            match byte {
-                b'{' => {
-                    value.push(MessageValue::Text(unsafe {
-                        String::from_utf8_unchecked(std::mem::take(&mut buffer))
-                    }));
-
-                    let mut number = 0;
-
-                    loop {
-                        match bytes.next() {
-                            Some(byte) => match byte {
-                                b'}' => {
-                                    match max_placeholder {
-                                        Some(max) => {
-                                            max_placeholder = Some(max.max(number));
-                                        }
-                                        None => {
-                                            max_placeholder = Some(number);
-                                        }
-                                    }
-                                    value.push(MessageValue::Placeholder(number));
-                                    break;
-                                }
-                                b'0'..=b'9' => {
-                                    number *= 10;
-                                    number += (byte - b'0') as usize;
-                                }
-                                _ => {
-                                    panic!("Missing closing brace for placeholder in message '{}' within file: {}", name, file_path.display())
-                                }
-                            },
-                            None => {
-                                panic!(
-                                    "without number placeholder in {} for {}",
-                                    file_path.display(),
-                                    name
-                                )
-                            }
-                        }
-                    }
-                }
-                b'\\' => {
-                    if let Some(byte) = bytes.next() {
-                        match byte {
-                            b'{' => buffer.push(b'{'),
-                            _ => {
-                                buffer.push(b'\\');
-                                buffer.push(byte);
-                            }
-                        }
-                    } else {
-                        buffer.push(b'\\');
-                    }
-                }
-                _ => buffer.push(byte),
+        let message = MessageToken::from_str(&text).unwrap_or_else(|err| {
+            panic!(
+                "Failed to parse message token for language '{}' and key '{}': {}",
+                lang, &name, err
+            )
+        });
+        for value in &message.values {
+            if let MessageTokenValue::PlaceholderIdent(ident) = value {
+                panic!(
+                    "Placeholder '{{{}}}' is not allowed in the message token for language '{}' and key '{}'",
+                    ident, lang, &name
+                );
             }
         }
-
-        if let Some(max_placeholder) = max_placeholder {
-            let mut numbers = vec![false; max_placeholder + 1];
-            for v in &value {
-                if let MessageValue::Placeholder(number) = v {
-                    numbers[*number] = true;
-                }
-            }
-            for (i, v) in numbers.iter().enumerate() {
-                if !v {
-                    panic!(
-                        "Placeholder index {} is missing in message '{}' for language '{}'. The highest index found is {}.",
-                        i, name, lang, max_placeholder
-                    );
-                }
-            }
-        }
-
-        if !buffer.is_empty() {
-            value.push(MessageValue::Text(unsafe {
-                String::from_utf8_unchecked(buffer)
-            }));
-        }
-
-        messages.push(arg::Message {
+        messages.push(Message {
             name,
-            values: value,
+            value: message,
         });
     }
     messages

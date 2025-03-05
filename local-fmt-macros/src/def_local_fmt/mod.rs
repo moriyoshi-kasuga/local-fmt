@@ -3,7 +3,7 @@
 mod arg;
 mod internal;
 
-use arg::Args;
+pub(crate) use arg::Args;
 use proc_macro2::TokenStream;
 
 pub(crate) fn generate(args: Args) -> syn::Result<TokenStream> {
