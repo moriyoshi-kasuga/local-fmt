@@ -1,5 +1,6 @@
 mod def_local_fmt;
 mod parse;
+mod util_macro;
 
 /// A procedural macro to define localized formatted messages.
 ///
@@ -142,5 +143,23 @@ pub fn def_local_fmt(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
 
     def_local_fmt::generate(args)
         .unwrap_or_else(syn::Error::into_compile_error)
+        .into()
+}
+
+#[proc_macro]
+pub fn gen_const_message(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    let args = syn::parse_macro_input!(input as util_macro::Args);
+
+    args.to_token(true)
+        .unwrap_or_else(|err| err.to_compile_error())
+        .into()
+}
+
+#[proc_macro]
+pub fn gen_message(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    let args = syn::parse_macro_input!(input as util_macro::Args);
+
+    args.to_token(false)
+        .unwrap_or_else(|err| err.to_compile_error())
         .into()
 }

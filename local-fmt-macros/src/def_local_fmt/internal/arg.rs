@@ -66,7 +66,7 @@ impl Message {
         let name = &self.name;
         let ident = Ident::new(&self.name, proc_macro2::Span::call_site());
         let value = self.value.to_static_token_stream();
-        let arg_count = self.value.placeholder_count;
+        let arg_count = self.value.placeholder_max;
 
         let token = quote::quote! {
             #ident: check_const_message_arg!(#current_lang, #name, #arg_count, #value)

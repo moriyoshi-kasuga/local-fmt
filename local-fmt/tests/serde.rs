@@ -9,7 +9,7 @@ struct Test {
 
 #[test]
 fn ser() {
-    let message = gen_const_message!("Hello! ", { 0 });
+    let message = gen_const_message!("Hello! {0}");
     let test = Test { hello: message };
     let text = toml::to_string(&test).unwrap();
     assert_eq!(text, "hello = \"Hello! {0}\"\n");

@@ -49,33 +49,27 @@ impl MessageTokenValue {
 }
 
 #[derive(Debug, thiserror::Error)]
+#[error("not found placeholder value in braces")]
+pub(crate) struct MessageTokenEmptyPlaceholderError;
+
+#[derive(Debug, thiserror::Error)]
 pub(crate) enum MessageTokenValueError {
     #[error("Placeholder number {0} is not found in the message. The hiest number found is {1}")]
     NotFound(usize, usize),
-    #[error("Placeholder number {0} is out of range. The hiest number found is {1}")]
-    OutOfRange(usize, usize),
-    #[error("not found placeholder value in braces")]
-    EmptyPlaceholder,
+    #[error("{0}")]
+    EmptyPlaceholder(#[from] MessageTokenEmptyPlaceholderError),
 }
 
 pub(crate) struct MessageToken {
     pub values: Vec<MessageTokenValue>,
-    pub placeholder_count: usize,
+    pub placeholder_max: Option<usize>,
 }
 
 impl MessageToken {
-    pub(crate) fn new(values: Vec<MessageTokenValue>) -> Result<Self, MessageTokenValueError> {
-        let max = values
-            .iter()
-            .filter_map(|v| match v {
-                MessageTokenValue::PlaceholderArg(n) => Some(*n),
-                _ => None,
-            })
-            .max();
-
-        if let Some(max) = max {
+    pub(crate) fn check(&self) -> Result<(), MessageTokenValueError> {
+        if let Some(max) = self.placeholder_max {
             let mut flag = vec![false; max + 1];
-            for v in &values {
+            for v in &self.values {
                 if let MessageTokenValue::PlaceholderArg(n) = v {
                     flag[*n] = true;
                 }
@@ -87,14 +81,26 @@ impl MessageToken {
             }
         }
 
-        Ok(Self {
+        Ok(())
+    }
+
+    pub(crate) fn new_unchecked(values: Vec<MessageTokenValue>) -> Self {
+        let max = values
+            .iter()
+            .filter_map(|v| match v {
+                MessageTokenValue::PlaceholderArg(n) => Some(*n),
+                _ => None,
+            })
+            .max();
+
+        Self {
             values,
-            placeholder_count: max.unwrap_or(0),
-        })
+            placeholder_max: max,
+        }
     }
 
     pub(crate) fn to_vec_token_stream(&self) -> TokenStream {
-        let count = self.placeholder_count;
+        let count = self.placeholder_max.map_or(0, |v| v + 1);
         let values = self
             .values
             .iter()
@@ -106,11 +112,12 @@ impl MessageToken {
                 #(
                     #values
                 )*
-            ]);
+            ])
         }
     }
+
     pub(crate) fn to_static_token_stream(&self) -> TokenStream {
-        let count = self.placeholder_count;
+        let count = self.placeholder_max.map_or(0, |v| v + 1);
         let values = self
             .values
             .iter()
@@ -122,15 +129,10 @@ impl MessageToken {
                 #(
                     #values
                 )*
-            ]);
+            ])
         }
     }
-}
-
-impl FromStr for MessageToken {
-    type Err = MessageTokenValueError;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
+    pub(crate) fn from_str_unchecked(s: &str) -> Result<Self, MessageTokenEmptyPlaceholderError> {
         let mut values = Vec::<MessageTokenValue>::new();
 
         let mut buffer = Vec::<u8>::new();
@@ -153,7 +155,7 @@ impl FromStr for MessageToken {
                             Some(byte) => match byte {
                                 b'}' => {
                                     if placeholder.is_empty() {
-                                        return Err(MessageTokenValueError::EmptyPlaceholder);
+                                        return Err(MessageTokenEmptyPlaceholderError);
                                     }
                                     let placeholder =
                                         unsafe { std::str::from_utf8_unchecked(&placeholder) };
@@ -176,7 +178,7 @@ impl FromStr for MessageToken {
                                 byte => placeholder.push(byte),
                             },
                             None => {
-                                return Err(MessageTokenValueError::EmptyPlaceholder);
+                                return Err(MessageTokenEmptyPlaceholderError);
                             }
                         }
                     }
@@ -204,6 +206,18 @@ impl FromStr for MessageToken {
             }));
         }
 
-        Self::new(values)
+        Ok(Self::new_unchecked(values))
+    }
+}
+
+impl FromStr for MessageToken {
+    type Err = MessageTokenValueError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let result = Self::from_str_unchecked(s)?;
+
+        result.check()?;
+
+        Ok(result)
     }
 }
