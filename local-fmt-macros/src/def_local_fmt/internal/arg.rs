@@ -2,6 +2,8 @@ use proc_macro2::TokenStream;
 use quote::ToTokens;
 use syn::Ident;
 
+use crate::parse::MessageToken;
+
 pub(crate) struct LangMessage {
     pub lang: String,
     pub messages: Vec<Message>,
@@ -9,12 +11,7 @@ pub(crate) struct LangMessage {
 
 pub(crate) struct Message {
     pub name: String,
-    pub values: Vec<MessageValue>,
-}
-
-pub(crate) enum MessageValue {
-    Text(String),
-    Placeholder(usize),
+    pub value: MessageToken,
 }
 
 impl LangMessage {
@@ -66,52 +63,36 @@ impl ToTokens for ParseableLangMessage<'_> {
 
 impl Message {
     fn to_token(&self, current_lang: &str) -> TokenStream {
-        let name = &self.name;
-        let ident = Ident::new(&self.name, proc_macro2::Span::call_site());
-        let values = &self.values;
-
-        let arg_count = values
-            .iter()
-            .filter(|v| matches!(v, MessageValue::Placeholder(_)))
-            .count();
-
-        let values = values.iter().fold(TokenStream::new(), |mut acc, v| {
-            match v {
-                MessageValue::Text(text) => {
-                    acc.extend(quote::quote! {
-                        #text,
-                    });
-                }
-                MessageValue::Placeholder(index) => {
-                    acc.extend(quote::quote! {
-                        { #index },
-                    });
-                }
-            }
-            acc
-        });
-
-        let token = quote::quote! {
-            #ident: check_const_message_arg!(#current_lang, #name, #arg_count, #values)
-        };
-
-        token
-    }
-}
-
-impl ToTokens for MessageValue {
-    fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
-        match self {
-            MessageValue::Text(text) => {
-                tokens.extend(quote::quote! {
-                    #text
-                });
-            }
-            MessageValue::Placeholder(index) => {
-                tokens.extend(quote::quote! {
-                    { #index }
-                });
-            }
-        }
+        todo!();
+        // let name = &self.name;
+        // let ident = Ident::new(&self.name, proc_macro2::Span::call_site());
+        // let values = &self.values;
+        //
+        // let arg_count = values
+        //     .iter()
+        //     .filter(|v| matches!(v, MessageValue::Placeholder(_)))
+        //     .count();
+        //
+        // let values = values.iter().fold(TokenStream::new(), |mut acc, v| {
+        //     match v {
+        //         MessageValue::Text(text) => {
+        //             acc.extend(quote::quote! {
+        //                 #text,
+        //             });
+        //         }
+        //         MessageValue::Placeholder(index) => {
+        //             acc.extend(quote::quote! {
+        //                 { #index },
+        //             });
+        //         }
+        //     }
+        //     acc
+        // });
+        //
+        // let token = quote::quote! {
+        //     #ident: check_const_message_arg!(#current_lang, #name, #arg_count, #values)
+        // };
+        //
+        // token
     }
 }

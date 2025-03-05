@@ -1,12 +1,10 @@
-#![allow(clippy::panic)]
-
 use std::path::Path;
 
-use arg::{LangMessage, MessageValue};
+use arg::LangMessage;
 
-use crate::internal_def_local_fmt::ArgPath;
+use super::arg::ArgPath;
 
-pub(crate) mod arg;
+mod arg;
 
 pub(crate) fn generate(path: ArgPath) -> Vec<arg::LangMessage> {
     match path {
