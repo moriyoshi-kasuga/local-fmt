@@ -23,7 +23,7 @@ pub enum MessageFormat {
 /// # use local_fmt::{ConstMessage, MessageFormat};
 /// use local_fmt::gen_const_message;
 ///
-/// const MESSAGES: local_fmt::ConstMessage<1> = gen_const_message!({ 0 }, " world!");
+/// const MESSAGES: local_fmt::ConstMessage<1> = gen_const_message!("{0} world!");
 ///
 /// assert_eq!(MESSAGES.format(&["Hello"]), "Hello world!");
 /// ```
@@ -49,7 +49,7 @@ pub enum MessageFormat {
 ///
 /// let world = "world!".to_string();
 ///
-/// let message = gen_message!({0}, " ", world).unwrap();
+/// let message = gen_message!("{0} {world}");
 ///
 /// assert_eq!(message.format(&["Hello"]), "Hello world!");
 /// ```
