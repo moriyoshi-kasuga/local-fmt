@@ -12,7 +12,12 @@ enum Lang {
     JA,
 }
 
+struct InnerMessages {
+    pub hey: ConstMessage<0>,
+}
+
 struct Messages {
+    pub inner: InnerMessages,
     pub hello: ConstMessage<1>,
 }
 
@@ -26,7 +31,9 @@ fn get_lang() -> Lang {
 def_local_fmt!(
     name = MESSAGES,
     lang = Lang,
-    message = Messages,
+    message = Messages {
+        inner: InnerMessages,
+    },
     dynamic_supplier = get_lang,
     lang_file = "tests/lang.toml"
 );

@@ -1,9 +1,42 @@
 use std::path::PathBuf;
 
+use syn::parse::ParseStream;
+use syn::Ident;
+
+pub(crate) struct MessageField {
+    pub(crate) ty: Ident,
+    pub(crate) fields: Option<Vec<(Ident, MessageField)>>,
+}
+
+impl syn::parse::Parse for MessageField {
+    fn parse(input: ParseStream) -> syn::Result<Self> {
+        let ty: Ident = input.parse()?;
+        if !input.peek(syn::token::Brace) {
+            let _: syn::Token![,] = input.parse()?;
+            return Ok(Self { ty, fields: None });
+        };
+        let content;
+        syn::braced!(content in input);
+        let mut fields = Vec::new();
+        while !content.is_empty() {
+            let ty: Ident = content.parse()?;
+            let _: syn::Token![:] = content.parse()?;
+
+            let field: MessageField = content.parse()?;
+
+            fields.push((ty, field));
+        }
+        Ok(Self {
+            ty,
+            fields: Some(fields),
+        })
+    }
+}
+
 pub(crate) struct Args {
-    pub(crate) name: syn::Ident,
-    pub(crate) lang: syn::Ident,
-    pub(crate) message: syn::Ident,
+    pub(crate) name: Ident,
+    pub(crate) lang: Ident,
+    pub(crate) message: MessageField,
     pub(crate) supplier: syn::Expr,
     pub(crate) path: ArgPath,
 }
@@ -27,7 +60,7 @@ impl syn::parse::Parse for Args {
 
         macro_rules! parse {
             ($ident:ident) => {
-                parse!($ident, syn::Ident);
+                parse!($ident, Ident);
             };
             ($ident:ident, $ty:ty) => {
                 parse!($ident, $ty, without_comma);
@@ -42,7 +75,7 @@ impl syn::parse::Parse for Args {
 
         parse!(name);
         parse!(lang);
-        parse!(message);
+        parse!(message, MessageField);
 
         let supplier = if input.peek(kw::static_supplier) {
             parse!(static_supplier, syn::Expr);
