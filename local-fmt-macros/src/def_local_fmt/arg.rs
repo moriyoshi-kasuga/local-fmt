@@ -38,7 +38,24 @@ pub(crate) struct Args {
     pub(crate) lang: Ident,
     pub(crate) message: MessageField,
     pub(crate) supplier: syn::Expr,
+    pub(crate) file_type: ArgFileType,
     pub(crate) path: ArgPath,
+}
+
+pub(crate) enum ArgFileType {
+    Toml,
+    Json,
+}
+
+impl syn::parse::Parse for ArgFileType {
+    fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
+        let ident: Ident = input.parse()?;
+        match ident.to_string().as_str() {
+            "toml" => Ok(Self::Toml),
+            "json" => Ok(Self::Json),
+            _ => Err(syn::Error::new(ident.span(), "expected toml or json")),
+        }
+    }
 }
 
 pub(crate) enum ArgPath {
@@ -54,6 +71,7 @@ impl syn::parse::Parse for Args {
             syn::custom_keyword!(message);
             syn::custom_keyword!(static_supplier);
             syn::custom_keyword!(dynamic_supplier);
+            syn::custom_keyword!(file_type);
             syn::custom_keyword!(lang_file);
             syn::custom_keyword!(lang_folder);
         }
@@ -87,6 +105,8 @@ impl syn::parse::Parse for Args {
             return Err(input.error("expected static_supplier or dynamic_supplier"));
         };
 
+        parse!(file_type, ArgFileType);
+
         #[allow(clippy::panic)]
         let crate_root = std::env::var("CARGO_MANIFEST_DIR")
             .unwrap_or_else(|_| panic!("failed to get CARGO_MANIFEST_DIR"));
@@ -113,6 +133,7 @@ impl syn::parse::Parse for Args {
             lang,
             message,
             supplier,
+            file_type,
             path,
         })
     }

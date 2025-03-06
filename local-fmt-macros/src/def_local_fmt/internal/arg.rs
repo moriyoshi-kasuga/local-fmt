@@ -1,6 +1,5 @@
 use proc_macro2::TokenStream;
 use quote::ToTokens;
-use syn::Ident;
 
 use crate::parse::MessageToken;
 
@@ -10,8 +9,13 @@ pub(crate) struct LangMessage {
 }
 
 pub(crate) struct Message {
-    pub name: String,
-    pub value: MessageToken,
+    pub key: String,
+    pub value: MessageValue,
+}
+
+pub(crate) enum MessageValue {
+    Token(MessageToken),
+    Nested(Vec<Message>),
 }
 
 impl LangMessage {
@@ -63,15 +67,16 @@ impl ToTokens for ParseableLangMessage<'_> {
 
 impl Message {
     fn to_token(&self, current_lang: &str) -> TokenStream {
-        let name = &self.name;
-        let ident = Ident::new(&self.name, proc_macro2::Span::call_site());
-        let value = self.value.to_static_token_stream();
-        let arg_count = self.value.placeholder_max;
-
-        let token = quote::quote! {
-            #ident: check_const_message_arg!(#current_lang, #name, #arg_count, #value)
-        };
-
-        token
+        todo!();
+        // let name = &self.key;
+        // let ident = Ident::new(&self.key, proc_macro2::Span::call_site());
+        // let value = self.value.to_static_token_stream();
+        // let arg_count = self.value.placeholder_max;
+        //
+        // let token = quote::quote! {
+        //     #ident: check_const_message_arg!(#current_lang, #name, #arg_count, #value)
+        // };
+        //
+        // token
     }
 }

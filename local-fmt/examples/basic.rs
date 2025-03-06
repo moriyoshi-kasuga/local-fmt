@@ -23,13 +23,13 @@ fn get_lang() -> Lang {
     *LANG.read().unwrap()
 }
 
-def_local_fmt!(
-    name = MESSAGES,
-    lang = Lang,
-    message = Messages,
-    dynamic_supplier = get_lang,
-    lang_folder = "examples/lang/"
-);
+// def_local_fmt!(
+//     name = MESSAGES,
+//     lang = Lang,
+//     message = Messages,
+//     dynamic_supplier = get_lang,
+//     lang_folder = "examples/lang/"
+// );
 
 #[allow(
     clippy::unwrap_used,
@@ -48,10 +48,10 @@ fn main() {
 
     *LANG.write().unwrap() = lang;
 
-    println!("{}", MESSAGES.welcome.format(&[&user]));
-
-    println!("{}", MESSAGES.rust.format(&[&user, "ownership"]));
-    println!("{}", MESSAGES.rust.format(&[&user, "compiler"]));
-
-    println!("{}", MESSAGES.goodbye.format(&[&user]));
+    // println!("{}", MESSAGES.welcome.format(&[&user]));
+    //
+    // println!("{}", MESSAGES.rust.format(&[&user, "ownership"]));
+    // println!("{}", MESSAGES.rust.format(&[&user, "compiler"]));
+    //
+    // println!("{}", MESSAGES.goodbye.format(&[&user]));
 }
