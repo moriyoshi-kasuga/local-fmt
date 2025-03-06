@@ -7,7 +7,11 @@ pub(crate) use arg::Args;
 use proc_macro2::TokenStream;
 
 pub(crate) fn generate(args: Args) -> syn::Result<TokenStream> {
-    let internal_token = internal::generate(args.file_type, args.path, &args.message);
+    let lang_messages = internal::generate(args.file_type, args.path, &args.message);
+    let internal_tokens = lang_messages
+        .iter()
+        .map(|lang_message| lang_message.to_token(&args.message))
+        .collect::<Vec<_>>();
     let name = args.name;
     let lang = args.lang;
     let message = args.message.ty;
@@ -17,7 +21,9 @@ pub(crate) fn generate(args: Args) -> syn::Result<TokenStream> {
             use local_fmt::{check_const_message_arg, gen_const_message, ConstMessage, macros::CheckConstMessageArg};
 
             let messages = enum_table::et!(#lang, #message, |lang| match lang {
-                #internal_token,
+                #(
+                    #lang::#internal_tokens,
+                )*
                 #[allow(unreachable_patterns, clippy::panic)]
                 _ => panic!("Not filled all languages"),
             });
