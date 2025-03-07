@@ -2,10 +2,10 @@ use std::error::Error;
 
 use super::{arg::MessageValue, ArgPath, LangMessage};
 
-pub(crate) mod json;
-pub(crate) mod toml;
+pub(super) mod json;
+pub(super) mod toml;
 
-pub(crate) trait MessageLoader: Sized {
+pub(super) trait MessageLoader: Sized {
     const EXTENSION: &'static str;
 
     type Value;

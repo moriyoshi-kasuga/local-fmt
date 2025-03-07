@@ -3,7 +3,7 @@ use std::str::FromStr;
 use proc_macro2::TokenStream;
 use syn::Ident;
 
-pub(crate) enum MessageTokenValue {
+pub enum MessageTokenValue {
     StaticText(String),
     PlaceholderArg(usize),
 
@@ -31,7 +31,7 @@ impl MessageTokenValue {
         }
     }
 
-    pub(crate) fn to_alloc_token_stream(&self) -> TokenStream {
+    pub fn to_alloc_token_stream(&self) -> TokenStream {
         self.to_token_stream(|ident| {
             quote::quote! {
                 local_fmt::MessageFormat::Text(#ident),
@@ -39,7 +39,7 @@ impl MessageTokenValue {
         })
     }
 
-    pub(crate) fn to_static_token_stream(&self) -> TokenStream {
+    pub fn to_static_token_stream(&self) -> TokenStream {
         self.to_token_stream(|ident| {
             quote::quote! {
                 local_fmt::MessageFormat::StaticText(#ident),
@@ -49,20 +49,20 @@ impl MessageTokenValue {
 }
 
 #[derive(Debug, thiserror::Error)]
-pub(crate) enum MessageTokenValueError {
+pub enum MessageTokenValueError {
     #[error("Placeholder number {0} is not found in the message. The hiest number found is {1}")]
     NotFound(usize, usize),
     #[error("not found placeholder value in braces")]
     EmptyPlaceholder,
 }
 
-pub(crate) struct MessageToken {
+pub struct MessageToken {
     pub values: Vec<MessageTokenValue>,
     pub placeholder_max: Option<usize>,
 }
 
 impl MessageToken {
-    pub(crate) fn new(values: Vec<MessageTokenValue>) -> Result<Self, MessageTokenValueError> {
+    pub fn new(values: Vec<MessageTokenValue>) -> Result<Self, MessageTokenValueError> {
         let max = values
             .iter()
             .filter_map(|v| match v {
@@ -91,7 +91,7 @@ impl MessageToken {
         })
     }
 
-    pub(crate) fn to_vec_token_stream(&self) -> TokenStream {
+    pub fn to_vec_token_stream(&self) -> TokenStream {
         let count = self.placeholder_max.map_or(0, |v| v + 1);
         let values = self
             .values
@@ -108,7 +108,7 @@ impl MessageToken {
         }
     }
 
-    pub(crate) fn to_static_token_stream(&self) -> TokenStream {
+    pub fn to_static_token_stream(&self) -> TokenStream {
         let count = self.placeholder_max.map_or(0, |v| v + 1);
         let values = self
             .values

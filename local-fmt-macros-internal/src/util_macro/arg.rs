@@ -5,8 +5,8 @@ use syn::{parse::Parse, LitStr};
 
 use crate::parse::MessageToken;
 
-pub(crate) struct Args {
-    pub(crate) text: LitStr,
+pub struct Args {
+    pub text: LitStr,
 }
 
 impl Parse for Args {
@@ -18,7 +18,7 @@ impl Parse for Args {
 }
 
 impl Args {
-    pub(crate) fn to_token(&self, is_static: bool) -> syn::Result<TokenStream> {
+    pub fn to_token(&self, is_static: bool) -> syn::Result<TokenStream> {
         let token = MessageToken::from_str(&self.text.value())
             .map_err(|v| syn::Error::new(self.text.span(), v))?;
 

@@ -3,10 +3,10 @@
 mod arg;
 mod internal;
 
-pub(crate) use arg::Args;
+pub use arg::Args;
 use proc_macro2::TokenStream;
 
-pub(crate) fn generate(args: Args) -> syn::Result<TokenStream> {
+pub fn generate(args: Args) -> syn::Result<TokenStream> {
     let lang_messages = internal::generate(args.file_type, args.path, &args.message);
     let internal_tokens = lang_messages
         .iter()

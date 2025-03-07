@@ -3,9 +3,9 @@ use std::path::PathBuf;
 use syn::parse::ParseStream;
 use syn::Ident;
 
-pub(crate) struct MessageField {
-    pub(crate) ty: Ident,
-    pub(crate) fields: Option<Vec<(Ident, MessageField)>>,
+pub struct MessageField {
+    pub ty: Ident,
+    pub fields: Option<Vec<(Ident, MessageField)>>,
 }
 
 impl syn::parse::Parse for MessageField {
@@ -33,16 +33,16 @@ impl syn::parse::Parse for MessageField {
     }
 }
 
-pub(crate) struct Args {
-    pub(crate) name: Ident,
-    pub(crate) lang: Ident,
-    pub(crate) message: MessageField,
-    pub(crate) supplier: syn::Expr,
-    pub(crate) file_type: ArgFileType,
-    pub(crate) path: ArgPath,
+pub struct Args {
+    pub name: Ident,
+    pub lang: Ident,
+    pub message: MessageField,
+    pub supplier: syn::Expr,
+    pub file_type: ArgFileType,
+    pub path: ArgPath,
 }
 
-pub(crate) enum ArgFileType {
+pub enum ArgFileType {
     Toml,
     Json,
 }
@@ -58,7 +58,7 @@ impl syn::parse::Parse for ArgFileType {
     }
 }
 
-pub(crate) enum ArgPath {
+pub enum ArgPath {
     File(PathBuf),
     Folder(PathBuf),
 }

@@ -1,7 +1,6 @@
 use std::sync::RwLock;
 
 use enum_table::Enumable;
-use local_fmt::def_local_fmt;
 use local_fmt::ConstMessage;
 
 #[derive(Clone, Copy, Enumable)]
