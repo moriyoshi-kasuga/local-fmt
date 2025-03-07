@@ -69,9 +69,50 @@ impl Message {
                     token_stream
                 }
             },
-            Some(fields) => {
-                todo!();
-            }
+            Some(fields) => match fields.iter().find(|(ty, _)| ty == &ident) {
+                None => match &self.value {
+                    MessageValue::Token(token) => {
+                        let arg_count = token.placeholder_max.unwrap_or(0);
+                        let value = token.to_static_token_stream();
+                        quote::quote! {
+                            #ident: check_const_message_arg!(#lang, #name, #arg_count, #value)
+                        }
+                    }
+                    MessageValue::Nested(_) => {
+                        panic!(
+                            "Expected a string with key {}, but got a nested message in language {}",
+                            hierarchy.join(name), lang
+                        )
+                    }
+                },
+                Some((_, field)) => {
+                    let message = match self.value {
+                        MessageValue::Nested(ref messages) => messages,
+                        MessageValue::Token(_) => {
+                            panic!(
+                                "Expected a nested message with key {}, but got a string in language {}",
+                                hierarchy.join(name), lang
+                            )
+                        }
+                    };
+                    let token = hierarchy.process(name.to_string(), |hierarchy| {
+                        message
+                            .iter()
+                            .map(|m| m.to_token(lang, hierarchy, field))
+                            .collect::<Vec<_>>()
+                    });
+
+                    let ty = &field.ty;
+
+                    quote::quote! {
+                        #ident: #ty {
+                            #(
+                                #token,
+                            )*
+                        }
+                    }
+                }
+            },
         }
     }
 }

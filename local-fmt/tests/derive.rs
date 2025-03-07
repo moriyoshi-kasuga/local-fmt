@@ -39,8 +39,10 @@ def_local_fmt!(
 #[test]
 fn normal() {
     assert_eq!(MESSAGES.hello.format(&["Rust"]), "Hello, world! Rust");
+    assert_eq!(MESSAGES.inner.name.format(&[]), "world");
 
     *LANG.write().unwrap() = Lang::JA;
 
     assert_eq!(MESSAGES.hello.format(&["Rust"]), "こんにちは、世界！ Rust");
+    assert_eq!(MESSAGES.inner.name.format(&[]), "世界");
 }

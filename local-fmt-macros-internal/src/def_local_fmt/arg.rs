@@ -1,9 +1,9 @@
 use std::path::PathBuf;
 
 use syn::parse::ParseStream;
-use syn::punctuated::Punctuated;
 use syn::{Ident, LitStr};
 
+#[derive(Debug)]
 pub struct MessageField {
     pub ty: Ident,
     pub fields: Option<Vec<(Ident, MessageField)>>,
@@ -105,7 +105,11 @@ impl syn::parse::Parse for Args {
 
         parse!(name);
         parse!(lang);
-        parse!(message, MessageField);
+        parse!(message, MessageField, without_comma);
+
+        if message.fields.is_some() {
+            let _: syn::Token![,] = input.parse()?;
+        }
 
         let supplier = if input.peek(kw::static_supplier) {
             parse!(static_supplier, syn::Expr);
