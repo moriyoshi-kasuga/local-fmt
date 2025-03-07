@@ -1,7 +1,7 @@
 use proc_macro2::TokenStream;
 use syn::Ident;
 
-use crate::parse::MessageToken;
+use crate::{parse::MessageToken, utils::hierarchy::Hierarchy};
 
 use super::MessageField;
 
@@ -23,7 +23,10 @@ pub(crate) enum MessageValue {
 impl LangMessage {
     pub(crate) fn to_token(&self, field: &MessageField) -> TokenStream {
         let lang = Ident::new(&self.lang, proc_macro2::Span::call_site());
-        let message = self.messages.iter().map(|v| v.to_token(&self.lang, field));
+        let message = self
+            .messages
+            .iter()
+            .map(|v| v.to_token(&self.lang, &mut Hierarchy::new(), field));
         let ty = &field.ty;
         quote::quote! {
             #lang => #ty {
@@ -36,13 +39,36 @@ impl LangMessage {
 }
 
 impl Message {
-    fn to_token(&self, lang: &str, field: &MessageField) -> TokenStream {
+    fn to_token(
+        &self,
+        lang: &str,
+        hierarchy: &mut Hierarchy<String>,
+        field: &MessageField,
+    ) -> TokenStream {
         let name = &self.key;
         let ident = Ident::new(&self.key, proc_macro2::Span::call_site());
         match &field.fields {
-            None => {
-                todo!();
-            }
+            None => match &self.value {
+                MessageValue::Token(token) => {
+                    let arg_count = token.placeholder_max.unwrap_or(0);
+                    let value = token.to_static_token_stream();
+                    quote::quote! {
+                        #ident: check_const_message_arg!(#lang, #name, #arg_count, #value)
+                    }
+                }
+                MessageValue::Nested(messages) => {
+                    let mut token_stream = TokenStream::new();
+                    for message in messages {
+                        let token = hierarchy.process(name.to_string(), |hierarchy| {
+                            message.to_token(lang, hierarchy, field)
+                        });
+                        token_stream.extend(quote::quote! {
+                            #ident: #token,
+                        });
+                    }
+                    token_stream
+                }
+            },
             Some(fields) => {
                 todo!();
             }

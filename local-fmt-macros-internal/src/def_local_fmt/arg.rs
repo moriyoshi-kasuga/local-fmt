@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use syn::parse::ParseStream;
-use syn::Ident;
+use syn::{Ident, LitStr};
 
 pub struct MessageField {
     pub ty: Ident,
@@ -17,6 +17,7 @@ impl syn::parse::Parse for MessageField {
         };
         let content;
         syn::braced!(content in input);
+
         let mut fields = Vec::new();
         while !content.is_empty() {
             let ty: Ident = content.parse()?;
@@ -26,6 +27,8 @@ impl syn::parse::Parse for MessageField {
 
             fields.push((ty, field));
         }
+
+        let _: syn::Token![,] = input.parse()?;
         Ok(Self {
             ty,
             fields: Some(fields),
@@ -49,11 +52,11 @@ pub enum ArgFileType {
 
 impl syn::parse::Parse for ArgFileType {
     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
-        let ident: Ident = input.parse()?;
-        match ident.to_string().as_str() {
+        let lit: LitStr = input.parse()?;
+        match lit.value().as_str() {
             "toml" => Ok(Self::Toml),
             "json" => Ok(Self::Json),
-            _ => Err(syn::Error::new(ident.span(), "expected toml or json")),
+            _ => Err(syn::Error::new(lit.span(), "expected toml or json")),
         }
     }
 }
@@ -93,7 +96,7 @@ impl syn::parse::Parse for Args {
 
         parse!(name);
         parse!(lang);
-        parse!(message, MessageField);
+        parse!(message, MessageField, without_comma);
 
         let supplier = if input.peek(kw::static_supplier) {
             parse!(static_supplier, syn::Expr);

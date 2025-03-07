@@ -1,6 +1,8 @@
 use arg::{LangMessage, Message, MessageValue};
 use file::{json::JsonMessageLoader, toml::TomlMessageLoader, MessageLoader};
 
+use crate::utils::hierarchy::Hierarchy;
+
 use super::arg::{ArgFileType, ArgPath, MessageField};
 
 mod arg;
@@ -20,7 +22,7 @@ pub(crate) fn generate(
         check_lang_message(
             &lang_message.lang,
             &lang_message.messages,
-            &mut Vec::new(),
+            &mut Hierarchy::new(),
             message,
         );
     }
@@ -31,7 +33,7 @@ pub(crate) fn generate(
 fn check_lang_message(
     lang: &str,
     messages: &Vec<Message>,
-    hierarchy: &mut Vec<String>,
+    hierarchy: &mut Hierarchy<String>,
     field: &MessageField,
 ) {
     match &field.fields {
@@ -56,9 +58,9 @@ fn check_lang_message(
 
                 match &message.value {
                     MessageValue::Nested(nested) => {
-                        hierarchy.push(message.key.clone());
-                        check_lang_message(lang, nested, hierarchy, field);
-                        hierarchy.pop();
+                        hierarchy.process(ty.to_string(), |hierarchy| {
+                            check_lang_message(lang, nested, hierarchy, field);
+                        });
                     }
                     _ => {
                         panic!(

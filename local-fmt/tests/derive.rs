@@ -3,7 +3,7 @@
 use std::sync::RwLock;
 
 use enum_table::Enumable;
-use local_fmt::ConstMessage;
+use local_fmt::{def_local_fmt, ConstMessage};
 
 #[derive(Clone, Copy, Enumable)]
 enum Lang {
@@ -11,12 +11,7 @@ enum Lang {
     JA,
 }
 
-struct InnerMessages {
-    pub hey: ConstMessage<0>,
-}
-
 struct Messages {
-    pub inner: InnerMessages,
     pub hello: ConstMessage<1>,
 }
 
@@ -27,21 +22,20 @@ fn get_lang() -> Lang {
     *LANG.read().unwrap()
 }
 
-// def_local_fmt!(
-//     name = MESSAGES,
-//     lang = Lang,
-//     message = Messages {
-//         inner: InnerMessages,
-//     },
-//     dynamic_supplier = get_lang,
-//     lang_file = "tests/lang.toml"
-// );
-//
-// #[test]
-// fn normal() {
-//     assert_eq!(MESSAGES.hello.format(&["Rust"]), "Hello, world! Rust");
-//
-//     *LANG.write().unwrap() = Lang::JA;
-//
-//     assert_eq!(MESSAGES.hello.format(&["Rust"]), "こんにちは、世界！ Rust");
-// }
+def_local_fmt!(
+    name = MESSAGES,
+    lang = Lang,
+    message = Messages,
+    dynamic_supplier = get_lang,
+    file_type = "toml",
+    lang_file = "tests/lang.toml"
+);
+
+#[test]
+fn normal() {
+    assert_eq!(MESSAGES.hello.format(&["Rust"]), "Hello, world! Rust");
+
+    *LANG.write().unwrap() = Lang::JA;
+
+    assert_eq!(MESSAGES.hello.format(&["Rust"]), "こんにちは、世界！ Rust");
+}
