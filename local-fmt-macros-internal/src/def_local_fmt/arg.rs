@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 
 use syn::parse::ParseStream;
+use syn::punctuated::Punctuated;
 use syn::{Ident, LitStr};
 
 pub struct MessageField {
@@ -12,7 +13,9 @@ impl syn::parse::Parse for MessageField {
     fn parse(input: ParseStream) -> syn::Result<Self> {
         let ty: Ident = input.parse()?;
         if !input.peek(syn::token::Brace) {
-            let _: syn::Token![,] = input.parse()?;
+            if !input.is_empty() {
+                let _: syn::Token![,] = input.parse()?;
+            }
             return Ok(Self { ty, fields: None });
         };
         let content;
@@ -21,14 +24,20 @@ impl syn::parse::Parse for MessageField {
         let mut fields = Vec::new();
         while !content.is_empty() {
             let ty: Ident = content.parse()?;
+
             let _: syn::Token![:] = content.parse()?;
 
             let field: MessageField = content.parse()?;
 
             fields.push((ty, field));
+
+            if content.is_empty() {
+                break;
+            }
+
+            let _: syn::Token![,] = content.parse()?;
         }
 
-        let _: syn::Token![,] = input.parse()?;
         Ok(Self {
             ty,
             fields: Some(fields),
@@ -96,7 +105,7 @@ impl syn::parse::Parse for Args {
 
         parse!(name);
         parse!(lang);
-        parse!(message, MessageField, without_comma);
+        parse!(message, MessageField);
 
         let supplier = if input.peek(kw::static_supplier) {
             parse!(static_supplier, syn::Expr);

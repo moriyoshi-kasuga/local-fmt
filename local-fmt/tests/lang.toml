@@ -1,5 +1,11 @@
 [JA]
 hello = "こんにちは、世界！ {0}"
 
+[JA.inner]
+name = "世界"
+
 [EN]
 hello = "Hello, world! {0}"
+
+[EN.inner]
+name = "world"
