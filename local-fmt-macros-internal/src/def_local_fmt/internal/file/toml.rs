@@ -1,5 +1,3 @@
-use std::error::Error;
-
 use super::MessageLoader;
 
 pub(crate) struct TomlMessageLoader;
@@ -22,8 +20,8 @@ impl MessageLoader for TomlMessageLoader {
         value.as_str()
     }
 
-    fn value_from_str(content: &str) -> Result<Self::Value, impl Error> {
-        toml::from_str(content)
+    fn value_from_str(content: &str) -> Result<Self::Value, String> {
+        toml::from_str(content).map_err(|e| e.to_string())
     }
 
     fn iter_nested(value: Self::NestValue) -> impl Iterator<Item = (String, Self::Value)> {

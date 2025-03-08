@@ -1,5 +1,3 @@
-use std::error::Error;
-
 use crate::def_local_fmt::arg::ArgFileType;
 
 use super::{arg::MessageValue, ArgPath, LangMessage};
@@ -10,29 +8,35 @@ mod json;
 #[cfg(feature = "toml")]
 mod toml;
 
+#[cfg(feature = "yaml")]
+mod yaml;
+
 pub(super) fn parse(file_type: ArgFileType, path: ArgPath) -> Vec<LangMessage> {
-    match file_type {
-        ArgFileType::Toml => {
-            #[cfg(feature = "toml")]
-            {
-                toml::TomlMessageLoader::from_path(path)
+    macro_rules! from_path {
+        ($file_type:ident, $path:ident, {$($pattern:pat => ($feature:literal, $mod:ident::$loader:ident),)+}) => {
+            use ArgFileType::*;
+            match $file_type {
+                $(
+                    $pattern => {
+                        #[cfg(feature = $feature)]
+                        {
+                            $mod::$loader::from_path($path)
+                        }
+                        #[cfg(not(feature = $feature))]
+                        {
+                            panic!(concat!($feature, " feature is not enabled"))
+                        }
+                    },
+                )+
             }
-            #[cfg(not(feature = "toml"))]
-            {
-                panic!("toml feature is not enabled")
-            }
-        }
-        ArgFileType::Json => {
-            #[cfg(feature = "json")]
-            {
-                json::JsonMessageLoader::from_path(path)
-            }
-            #[cfg(not(feature = "json"))]
-            {
-                panic!("json feature is not enabled")
-            }
-        }
+        };
     }
+
+    from_path! { file_type, path, {
+        Toml => ("toml", toml::TomlMessageLoader),
+        Json => ("json", json::JsonMessageLoader),
+        Yaml => ("yaml", yaml::YamlMessageLoader),
+    } }
 }
 
 pub(super) trait MessageLoader: Sized {
@@ -44,7 +48,7 @@ pub(super) trait MessageLoader: Sized {
 
     fn value_to_nest(value: Self::Value) -> Option<Self::NestValue>;
     fn value_as_str(value: &Self::Value) -> Option<&str>;
-    fn value_from_str(content: &str) -> Result<Self::Value, impl Error>;
+    fn value_from_str(content: &str) -> Result<Self::Value, String>;
     fn iter_nested(value: Self::NestValue) -> impl Iterator<Item = (String, Self::Value)>;
 
     fn from_path(path: ArgPath) -> Vec<LangMessage> {

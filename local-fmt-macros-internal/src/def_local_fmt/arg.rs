@@ -57,6 +57,7 @@ pub struct Args {
 pub enum ArgFileType {
     Toml,
     Json,
+    Yaml,
 }
 
 impl syn::parse::Parse for ArgFileType {
@@ -65,6 +66,7 @@ impl syn::parse::Parse for ArgFileType {
         match lit.value().as_str() {
             "toml" => Ok(Self::Toml),
             "json" => Ok(Self::Json),
+            "yaml" => Ok(Self::Yaml),
             _ => Err(syn::Error::new(lit.span(), "expected toml or json")),
         }
     }
