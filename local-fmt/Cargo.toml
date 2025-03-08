@@ -13,6 +13,8 @@ keywords.workspace = true
 [features]
 default = []
 macros = ["dep:local-fmt-macros"]
+macros-toml = ["macros", "local-fmt-macros/toml"]
+macros-json = ["macros", "local-fmt-macros/json"]
 serde = ["dep:serde"]
 
 [dependencies]
@@ -35,3 +37,4 @@ workspace = true
 [[example]]
 name = "basic"
 path = "examples/basic.rs"
+required-features = ["macros", "macros-toml"]

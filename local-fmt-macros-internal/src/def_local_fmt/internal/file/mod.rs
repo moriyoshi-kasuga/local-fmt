@@ -1,9 +1,39 @@
 use std::error::Error;
 
+use crate::def_local_fmt::arg::ArgFileType;
+
 use super::{arg::MessageValue, ArgPath, LangMessage};
 
-pub(super) mod json;
-pub(super) mod toml;
+#[cfg(feature = "json")]
+mod json;
+
+#[cfg(feature = "toml")]
+mod toml;
+
+pub(super) fn parse(file_type: ArgFileType, path: ArgPath) -> Vec<LangMessage> {
+    match file_type {
+        ArgFileType::Toml => {
+            #[cfg(feature = "toml")]
+            {
+                toml::TomlMessageLoader::from_path(path)
+            }
+            #[cfg(not(feature = "toml"))]
+            {
+                panic!("toml feature is not enabled")
+            }
+        }
+        ArgFileType::Json => {
+            #[cfg(feature = "json")]
+            {
+                json::JsonMessageLoader::from_path(path)
+            }
+            #[cfg(not(feature = "json"))]
+            {
+                panic!("json feature is not enabled")
+            }
+        }
+    }
+}
 
 pub(super) trait MessageLoader: Sized {
     const EXTENSION: &'static str;

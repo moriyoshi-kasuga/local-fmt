@@ -1,5 +1,4 @@
 use arg::{LangMessage, Message, MessageValue};
-use file::{json::JsonMessageLoader, toml::TomlMessageLoader, MessageLoader};
 
 use crate::utils::hierarchy::Hierarchy;
 
@@ -13,10 +12,7 @@ pub(crate) fn generate(
     path: ArgPath,
     message: &MessageField,
 ) -> Vec<LangMessage> {
-    let lang_messages = match file_type {
-        ArgFileType::Toml => TomlMessageLoader::from_path(path),
-        ArgFileType::Json => JsonMessageLoader::from_path(path),
-    };
+    let lang_messages = file::parse(file_type, path);
 
     for lang_message in &lang_messages {
         check_lang_message(

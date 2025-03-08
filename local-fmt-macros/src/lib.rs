@@ -65,6 +65,8 @@
 /// # Example 1
 ///
 /// ```rust
+/// # #![cfg(feature = "toml")]
+///
 /// use std::sync::RwLock;
 /// use enum_table::Enumable;
 /// use local_fmt::{def_local_fmt, ConstMessage};
@@ -99,6 +101,8 @@
 ///
 /// # Example 2
 /// ```
+/// # #![cfg(feature = "json")]
+///
 /// use enum_table::Enumable;
 /// use local_fmt::{def_local_fmt, ConstMessage, LocalFmt};
 /// use std::sync::RwLock;

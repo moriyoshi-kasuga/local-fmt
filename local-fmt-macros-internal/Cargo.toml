@@ -11,14 +11,18 @@ readme.workspace = true
 categories.workspace = true
 keywords.workspace = true
 
+[features]
+toml = ["dep:toml"]
+json = ["dep:serde_json"]
+
 [dependencies]
 syn = { workspace = true, default-features = true, features = ["full"] }
 thiserror.workspace = true
 proc-macro2 = "1.0"
 quote = "1.0"
 
-toml = "0.8"
-serde_json = "1.0"
+toml = { version = "0.8", optional = true }
+serde_json = { version = "1.0", optional = true }
 
 [lints]
 workspace = true

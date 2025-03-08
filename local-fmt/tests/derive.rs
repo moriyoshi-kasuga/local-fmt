@@ -1,4 +1,5 @@
 #![cfg(feature = "macros")]
+#![cfg(feature = "macros-toml")]
 
 use std::sync::RwLock;
 
