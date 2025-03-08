@@ -31,12 +31,6 @@ def_local_fmt!(
     lang_folder = "examples/lang/"
 );
 
-#[allow(
-    clippy::unwrap_used,
-    clippy::expect_used,
-    clippy::panic,
-    clippy::print_stdout
-)]
 fn main() {
     let lang = std::env::args()
         .nth(1)
