@@ -31,7 +31,7 @@ def_local_fmt!(
     name = MESSAGES,
     lang = Lang,
     message = Messages { inner: Inner },
-    dynamic_supplier = get_lang,
+    supplier = get_lang,
     file_type = "toml",
     lang_file = "tests/lang.toml"
 );

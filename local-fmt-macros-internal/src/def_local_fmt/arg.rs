@@ -81,8 +81,7 @@ impl syn::parse::Parse for Args {
             syn::custom_keyword!(name);
             syn::custom_keyword!(lang);
             syn::custom_keyword!(message);
-            syn::custom_keyword!(static_supplier);
-            syn::custom_keyword!(dynamic_supplier);
+            syn::custom_keyword!(supplier);
             syn::custom_keyword!(file_type);
             syn::custom_keyword!(lang_file);
             syn::custom_keyword!(lang_folder);
@@ -111,22 +110,16 @@ impl syn::parse::Parse for Args {
             let _: syn::Token![,] = input.parse()?;
         }
 
-        let supplier = if input.peek(kw::static_supplier) {
-            parse!(static_supplier, syn::Expr);
-            syn::parse_quote!(local_fmt::LangSupplier::Static(#static_supplier))
-        } else if input.peek(kw::dynamic_supplier) {
-            parse!(dynamic_supplier, syn::Expr);
-            syn::parse_quote!(local_fmt::LangSupplier::Dynamic(#dynamic_supplier))
-        } else {
-            return Err(input.error("expected static_supplier or dynamic_supplier"));
-        };
+        parse!(supplier, syn::Expr);
 
         parse!(file_type, ArgFileType);
 
-        #[allow(clippy::panic)]
-        let crate_root = std::env::var("CARGO_MANIFEST_DIR")
-            .unwrap_or_else(|_| panic!("failed to get CARGO_MANIFEST_DIR"));
-        let crate_root = PathBuf::from(crate_root);
+        let crate_root = {
+            #[allow(clippy::panic)]
+            let crate_root = std::env::var("CARGO_MANIFEST_DIR")
+                .unwrap_or_else(|_| panic!("failed to get CARGO_MANIFEST_DIR"));
+            PathBuf::from(crate_root)
+        };
 
         let path = if input.peek(kw::lang_file) {
             parse!(lang_file, syn::LitStr, without_comma);

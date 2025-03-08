@@ -9,11 +9,7 @@
 /// * `name` - The name of the generated static message set.
 /// * `lang` - The enumeration representing the supported languages.
 /// * `message` - The struct containing the constant messages.
-/// * `supplier` - The language supplier, which can be either static or dynamic. It determines
-///   how the current language is selected:
-///     * `static_supplier` - A static language value that does not change at runtime.
-///     * `dynamic_supplier` - A function that returns the current language, allowing dynamic language switching.
-///
+/// * `supplier` - The language supplier, type is fn() -> Lang. It determines how the current language is selected
 /// * `def location` - Specifies the location of the language definition files. This can be either:
 ///     * `lang_file` - The path to a single language definition file.
 ///     * `lang_folder` - The folder containing multiple language definition files, one for each language.
@@ -89,7 +85,8 @@
 ///     name = MESSAGES,
 ///     lang = Lang,
 ///     message = Messages,
-///     dynamic_supplier = || *LANG.read().unwrap(),
+///     supplier = || *LANG.read().unwrap(),
+///     file_type = "toml",
 ///     lang_folder = "doctest/langs"
 /// );
 ///
@@ -112,26 +109,34 @@
 ///    JA,
 /// }
 ///
-/// struct Messages {
-///    pub hello: ConstMessage<1>,
+/// struct ActionMessages {
+///     pub attack: ConstMessage<0>,
+///     pub run: ConstMessage<0>,
 /// }
 ///
-/// static MESSAGES: RwLock<LocalFmt<Lang, Messages, {Lang::COUNT}>> = RwLock::new({
-///     def_local_fmt!(
-///         name = MESSAGES,
-///         lang = Lang,
-///         message = Messages,
-///         static_supplier = Lang::EN,
-///         lang_file = "doctest/lang.toml"
-///     );
-///     MESSAGES
-/// });
+/// struct Messages {
+///     pub actions: ActionMessages,
+///     pub hello: ConstMessage<1>,
+/// }
 ///
-/// assert_eq!(MESSAGES.read().unwrap().hello.format(&["Rust"]), "Hello, world! Rust");
+/// static LANG: RwLock<Lang> = RwLock::new(Lang::EN);
 ///
-/// MESSAGES.write().unwrap().set_lang(local_fmt::LangSupplier::Static(Lang::JA));
+/// def_local_fmt!(
+///     name = MESSAGES,
+///     lang = Lang,
+///     message = Messages {
+///         actions: ActionMessages,
+///     },
+///     supplier = || *LANG.read().unwrap(),
+///     file_type = "json",
+///     lang_file = "doctest/lang.json"
+/// );
 ///
-/// assert_eq!(MESSAGES.read().unwrap().hello.format(&["Rust"]), "こんにちは、世界！ Rust");
+/// assert_eq!(MESSAGES.hello.format(&["Rust"]), "Hello, world! Rust");
+///
+/// *LANG.write().unwrap() = Lang::JA;
+///
+/// assert_eq!(MESSAGES.hello.format(&["Rust"]), "こんにちは、世界！ Rust");
 /// ```
 #[proc_macro]
 pub fn def_local_fmt(input: proc_macro::TokenStream) -> proc_macro::TokenStream {

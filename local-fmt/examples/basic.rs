@@ -26,7 +26,7 @@ def_local_fmt!(
     name = MESSAGES,
     lang = Lang,
     message = Messages,
-    dynamic_supplier = get_lang,
+    supplier = get_lang,
     file_type = "toml",
     lang_folder = "examples/lang/"
 );
@@ -38,7 +38,9 @@ def_local_fmt!(
     clippy::print_stdout
 )]
 fn main() {
-    let lang = std::env::args().nth(1).expect("Please specify lang");
+    let lang = std::env::args()
+        .nth(1)
+        .expect("Please specify lang, EN or JA");
     let lang = match lang.as_str() {
         "EN" => Lang::EN,
         "JA" => Lang::JA,

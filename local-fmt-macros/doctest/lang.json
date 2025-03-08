@@ -1,0 +1,16 @@
+{
+  "EN": {
+    "hello": "Hello, world! {0}",
+    "actions": {
+      "attack": "Attack",
+      "run": "Run"
+    }
+  },
+  "JA": {
+    "hello": "こんにちは、世界！ {0}",
+    "actions": {
+      "attack": "攻撃",
+      "run": "逃げる"
+    }
+  }
+}
