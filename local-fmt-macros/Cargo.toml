@@ -20,7 +20,7 @@ toml = ["local-fmt-macros-internal/toml"]
 json = ["local-fmt-macros-internal/json"]
 
 [dependencies]
-local-fmt-macros-internal = { path = "../local-fmt-macros-internal" }
+local-fmt-macros-internal = { version = "^0", path = "../local-fmt-macros-internal" }
 
 syn = { workspace = true, default-features = false, features = [
     "parsing",
