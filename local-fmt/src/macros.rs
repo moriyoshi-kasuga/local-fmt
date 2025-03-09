@@ -12,6 +12,7 @@ impl<From, To> CheckConstMessageArg<From, To> {
 }
 
 impl<const M: usize, const N: usize> CheckConstMessageArg<ConstMessage<N>, ConstMessage<M>> {
+    #[track_caller]
     pub const fn check(
         lang: &'static str,
         key: &'static str,
@@ -21,15 +22,15 @@ impl<const M: usize, const N: usize> CheckConstMessageArg<ConstMessage<N>, Const
             unsafe { std::mem::transmute::<ConstMessage<N>, ConstMessage<M>>(arg) }
         } else {
             panic_builder!(
-                "Error: A message with ".as_bytes(),
-                M.to_ne_bytes(),
-                " arguments was expected, but received a message with ".as_bytes(),
-                N.to_ne_bytes(),
-                " arguments. This occurred in the language '".as_bytes(),
-                lang.as_bytes(),
-                "' with the key '".as_bytes(),
-                key.as_bytes(),
-                "'. Please check the message definition and ensure the correct number of arguments.".as_bytes(),
+            ["Error: A message with "],
+                [u = M],
+                [" arguments was expected, but received a message with "],
+                [u = N],
+                [" arguments. This occurred in the language '"],
+                [lang],
+                ["' with the key '"],
+                [key],
+                ["'. Please check the message definition and ensure the correct number of arguments."],
             )
         }
     }

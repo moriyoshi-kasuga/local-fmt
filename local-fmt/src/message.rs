@@ -121,26 +121,27 @@ impl<const N: usize> ConstMessage<N> {
     ///
     /// assert_eq!(message.format(&["Hello"]), "Hello world!");
     /// ```
+    #[track_caller]
     pub const fn new_static(formats: &'static [MessageFormat]) -> Self {
         let formats = match Self::const_check(formats) {
             Ok(ok) => ok,
             Err(err) => match err {
                 ConstMessageError::InvalidNumber { number, n } => {
                     panic_builder!(
-                        "Invalid argument number: ".as_bytes(),
-                        number.to_ne_bytes(),
-                        " is out of the allowed range (0 <= number < ".as_bytes(),
-                        n.to_ne_bytes(),
-                        ").".as_bytes()
+                        ["Invalid argument number: "],
+                        [u = number],
+                        [" is out of the allowed range (0 <= number < "],
+                        [u = n],
+                        [")."]
                     )
                 }
                 ConstMessageError::WithoutNumber { number, n } => {
                     panic_builder!(
-                        "Missing argument number: ".as_bytes(),
-                        number.to_ne_bytes(),
-                        " is not found within the allowed range (0 <= number < ".as_bytes(),
-                        n.to_ne_bytes(),
-                        ").".as_bytes()
+                        ["Missing argument number: "],
+                        [u = number],
+                        [" is not found within the allowed range (0 <= number < "],
+                        [u = n],
+                        [")."]
                     )
                 }
                 ConstMessageError::EmptyPlaceholder => {
