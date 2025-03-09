@@ -2,8 +2,13 @@ use std::marker::PhantomData;
 
 use crate::ConstMessage;
 
-pub struct CheckConstMessageArg<From, To> {
-    _phantom: PhantomData<(From, To)>,
+pub struct CheckConstMessageArg<From, To>(PhantomData<(From, To)>);
+
+impl<From, To> CheckConstMessageArg<From, To> {
+    #[allow(clippy::new_without_default)]
+    pub const fn new() -> Self {
+        Self(PhantomData)
+    }
 }
 
 impl<const M: usize, const N: usize> CheckConstMessageArg<ConstMessage<N>, ConstMessage<M>> {

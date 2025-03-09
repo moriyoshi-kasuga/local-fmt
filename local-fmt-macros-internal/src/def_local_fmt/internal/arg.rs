@@ -1,7 +1,10 @@
 use proc_macro2::TokenStream;
 use syn::Ident;
 
-use crate::{parse::MessageToken, utils::hierarchy::Hierarchy};
+use crate::{
+    parse::{MessageToken, MessageTokenValue},
+    utils::hierarchy::Hierarchy,
+};
 
 use super::MessageField;
 
@@ -38,6 +41,30 @@ impl LangMessage {
     }
 }
 
+fn message_token_to_token_stream(token: &MessageToken) -> TokenStream {
+    match token.placeholder_max {
+        Some(_) => token.to_static_token_stream(),
+        None => {
+            let value = token.values.iter().fold(String::new(), |mut acc, v| {
+                match v {
+                    MessageTokenValue::StaticText(v) => acc.push_str(v),
+                    MessageTokenValue::PlaceholderArg(_) => {
+                        unreachable!()
+                    }
+                    MessageTokenValue::PlaceholderIdent(_) => {
+                        unreachable!()
+                    }
+                }
+                acc
+            });
+
+            quote::quote! {
+                #value
+            }
+        }
+    }
+}
+
 impl Message {
     fn to_token(
         &self,
@@ -50,7 +77,7 @@ impl Message {
         match &field.fields {
             None => match &self.value {
                 MessageValue::Token(token) => {
-                    let value = token.to_static_token_stream();
+                    let value = message_token_to_token_stream(token);
                     quote::quote! {
                         #ident: CheckConstMessageArg::check(#lang, #name, #value)
                     }
@@ -71,9 +98,9 @@ impl Message {
             Some(fields) => match fields.iter().find(|(ty, _)| ty == &ident) {
                 None => match &self.value {
                     MessageValue::Token(token) => {
-                        let token = token.to_static_token_stream();
+                        let value = message_token_to_token_stream(token);
                         quote::quote! {
-                            #ident: CheckConstMessageArg::check(#lang, #name, #token)
+                            #ident: CheckConstMessageArg::check(#lang, #name, #value)
                         }
                     }
                     MessageValue::Nested(_) => {
