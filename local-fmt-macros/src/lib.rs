@@ -165,7 +165,7 @@ pub fn def_local_fmt(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
 }
 
 #[proc_macro]
-pub fn gen_const_message(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+pub fn gen_static_message(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let args = syn::parse_macro_input!(input as local_fmt_macros_internal::util_macro::Args);
 
     args.to_token(true)
@@ -174,7 +174,7 @@ pub fn gen_const_message(input: proc_macro::TokenStream) -> proc_macro::TokenStr
 }
 
 #[proc_macro]
-pub fn gen_message(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+pub fn gen_alloc_message(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let args = syn::parse_macro_input!(input as local_fmt_macros_internal::util_macro::Args);
 
     args.to_token(false)

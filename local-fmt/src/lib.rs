@@ -14,7 +14,7 @@ mod serde;
 
 #[cfg(feature = "macros")]
 #[doc(inline)]
-pub use local_fmt_macros::{def_local_fmt, gen_const_message, gen_message};
+pub use local_fmt_macros::{def_local_fmt, gen_static_message, gen_alloc_message};
 #[cfg(feature = "macros")]
 pub mod macros;
 

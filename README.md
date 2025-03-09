@@ -16,7 +16,7 @@ by allowing developers to define messages in a structured and maintainable way.
 
 ## Crate cfg feature
 
-- **macros**: include `gen_const_messa`, `gen_message` and `def_local_fmt` macros
+- **macros**: include `gen_static_message`, `gen_alloc_message` and `def_local_fmt` macros
   if you use `def_local_fmt`, chose from below
 - **macros-toml**: parseable toml at `def_local_fmt`
 - **macros-json**: parseable json at `def_local_fmt`
