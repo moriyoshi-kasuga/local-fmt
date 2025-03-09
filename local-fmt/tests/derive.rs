@@ -23,16 +23,11 @@ struct Messages {
 
 static LANG: RwLock<Lang> = RwLock::new(Lang::EN);
 
-#[allow(clippy::unwrap_used)]
-fn get_lang() -> Lang {
-    *LANG.read().unwrap()
-}
-
 def_local_fmt!(
     name = MESSAGES,
     lang = Lang,
     message = Messages { inner: Inner },
-    supplier = get_lang,
+    supplier = || *LANG.read().unwrap(),
     file_type = "toml",
     lang_file = "tests/lang.toml"
 );

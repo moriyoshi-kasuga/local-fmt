@@ -12,7 +12,13 @@ enum Lang {
     JA,
 }
 
+struct WordsMessages {
+    pub ownership: ConstMessage<0>,
+    pub compiler: ConstMessage<0>,
+}
+
 struct Messages {
+    pub words: WordsMessages,
     pub welcome: ConstMessage<1>,
     pub rust: ConstMessage<2>,
     pub goodbye: ConstMessage<1>,
@@ -20,16 +26,13 @@ struct Messages {
 
 static LANG: RwLock<Lang> = RwLock::new(Lang::EN);
 
-#[allow(clippy::unwrap_used)]
-fn get_lang() -> Lang {
-    *LANG.read().unwrap()
-}
-
 def_local_fmt!(
     name = MESSAGES,
     lang = Lang,
-    message = Messages,
-    supplier = get_lang,
+    message = Messages {
+        words: WordsMessages,
+    },
+    supplier = || *LANG.read().unwrap(),
     file_type = "toml",
     lang_folder = "examples/lang/"
 );
@@ -49,8 +52,14 @@ fn main() {
 
     println!("{}", MESSAGES.welcome.format(&[&user]));
 
-    println!("{}", MESSAGES.rust.format(&[&user, "ownership"]));
-    println!("{}", MESSAGES.rust.format(&[&user, "compiler"]));
+    // println!(
+    //     "{}",
+    //     MESSAGES.rust.format(&[&user, MESSAGES.words.ownership])
+    // );
+    // println!(
+    //     "{}",
+    //     MESSAGES.rust.format(&[&user, MESSAGES.words.compiler])
+    // );
 
     println!("{}", MESSAGES.goodbye.format(&[&user]));
 }

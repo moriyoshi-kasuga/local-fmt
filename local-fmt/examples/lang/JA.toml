@@ -1,3 +1,7 @@
 welcome = "exampleへようこそ！{0}"
 rust = "やあ {0}、Rustは素晴らしい！{1}もいいね。"
 goodbye = "さようなら {0}！"
+
+[words]
+ownership = "所有権"
+compiler = "コンパイラー"

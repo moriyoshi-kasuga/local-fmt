@@ -50,10 +50,9 @@ impl Message {
         match &field.fields {
             None => match &self.value {
                 MessageValue::Token(token) => {
-                    let arg_count = token.placeholder_max.unwrap_or(0);
                     let value = token.to_static_token_stream();
                     quote::quote! {
-                        #ident: check_const_message_arg!(#lang, #name, #arg_count, #value)
+                        #ident: CheckConstMessageArg::check(#lang, #name, #value)
                     }
                 }
                 MessageValue::Nested(messages) => {
@@ -72,10 +71,9 @@ impl Message {
             Some(fields) => match fields.iter().find(|(ty, _)| ty == &ident) {
                 None => match &self.value {
                     MessageValue::Token(token) => {
-                        let arg_count = token.placeholder_max.unwrap_or(0);
-                        let value = token.to_static_token_stream();
+                        let token = token.to_static_token_stream();
                         quote::quote! {
-                            #ident: check_const_message_arg!(#lang, #name, #arg_count, #value)
+                            #ident: CheckConstMessageArg::check(#lang, #name, #token)
                         }
                     }
                     MessageValue::Nested(_) => {
@@ -85,7 +83,7 @@ impl Message {
                         )
                     }
                 },
-                Some((_, field)) => {
+                Some((ident, field)) => {
                     let message = match self.value {
                         MessageValue::Nested(ref messages) => messages,
                         MessageValue::Token(_) => {

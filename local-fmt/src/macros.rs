@@ -1,23 +1,93 @@
+use std::marker::PhantomData;
+
 use crate::ConstMessage;
 
-pub struct CheckConstMessageArg<const M: usize, const N: usize>;
+pub struct CheckConstMessageArg<From, To> {
+    _phantom: PhantomData<(From, To)>,
+}
 
-impl<const M: usize, const N: usize> CheckConstMessageArg<M, N> {
-    pub const fn check(message: &'static str, arg: ConstMessage<N>) -> ConstMessage<M> {
+impl<const M: usize, const N: usize> CheckConstMessageArg<ConstMessage<N>, ConstMessage<M>> {
+    pub const fn check(
+        lang: &'static str,
+        key: &'static str,
+        arg: ConstMessage<N>,
+    ) -> ConstMessage<M> {
         if N == M {
             unsafe { std::mem::transmute::<ConstMessage<N>, ConstMessage<M>>(arg) }
         } else {
-            panic!("{}", message);
+            dev_macros::panic_builder!(
+                "Error: A message with ".as_bytes(),
+                M.to_ne_bytes(),
+                " arguments was expected, but received a message with ".as_bytes(),
+                N.to_ne_bytes(),
+                " arguments. This occurred in the language '".as_bytes(),
+                lang.as_bytes(),
+                "' with the key '".as_bytes(),
+                key.as_bytes(),
+                "'. Please check the message definition and ensure the correct number of arguments.".as_bytes(),
+            )
         }
     }
 }
 
-#[macro_export]
-macro_rules! check_const_message_arg {
-    ($lang:expr, $key:expr, $count:literal, $($arg:tt)*) => {
-        CheckConstMessageArg::check(
-            concat!("Mismatch in the number of arguments for the message in language '", $lang, "' with key '", $key, "'."),
-            $($arg)*
+impl<const N: usize> CheckConstMessageArg<ConstMessage<N>, &'static str> {
+    pub const fn check(lang: &'static str, key: &'static str, _: ConstMessage<N>) -> &'static str {
+        dev_macros::panic_builder!(
+            "Error: A message with no arguments was expected, but received a message with "
+                .as_bytes(),
+            N.to_ne_bytes(),
+            " arguments. This occurred in the language '".as_bytes(),
+            lang.as_bytes(),
+            "' with the key '".as_bytes(),
+            key.as_bytes(),
+            "'. Please check the message definition and ensure the correct number of arguments."
+                .as_bytes(),
         )
-    };
+    }
+}
+
+impl CheckConstMessageArg<&'static str, &'static str> {
+    pub const fn check(
+        _lang: &'static str,
+        _key: &'static str,
+        text: &'static str,
+    ) -> &'static str {
+        text
+    }
+}
+
+impl<const M: usize> CheckConstMessageArg<&'static str, ConstMessage<M>> {
+    pub const fn check(lang: &'static str, key: &'static str, _: &'static str) -> ConstMessage<M> {
+        dev_macros::panic_builder!(
+            "Error: A message with ".as_bytes(),
+            M.to_ne_bytes(),
+            " arguments was expected, but received a message with no arguments. This occurred in the language '".as_bytes(),
+            lang.as_bytes(),
+            "' with the key '".as_bytes(),
+            key.as_bytes(),
+            "'. Please check the message definition and ensure the correct number of arguments.".as_bytes(),
+        )
+    }
+}
+
+mod dev_macros {
+    macro_rules! panic_builder {
+        ($($message:expr),* $(,)?) => {
+            {
+                let mut buffer = [0u8; 1024];
+                $(
+                    let message = $message;
+                    let mut i = 0;
+                    while i < message.len() {
+                        buffer[i] = message[i];
+                        i += 1;
+                    }
+                )*
+                let message = unsafe { std::str::from_utf8_unchecked(&buffer) };
+                panic!("{}", message);
+            }
+        };
+    }
+
+    pub(super) use panic_builder;
 }
