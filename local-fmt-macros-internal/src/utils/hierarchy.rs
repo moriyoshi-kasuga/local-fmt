@@ -13,7 +13,7 @@ impl<I> Hierarchy<I> {
         Hierarchy { items: Vec::new() }
     }
 
-    pub fn process<T>(&mut self, item: I, mut func: impl FnMut(&mut Self) -> T) -> T {
+    pub fn process<T>(&mut self, item: I, func: impl FnOnce(&mut Self) -> T) -> T {
         self.items.push(item);
         let t = func(self);
         self.items.pop();

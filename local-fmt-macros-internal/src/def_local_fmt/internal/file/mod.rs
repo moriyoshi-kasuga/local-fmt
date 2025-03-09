@@ -1,4 +1,4 @@
-use crate::def_local_fmt::arg::ArgFileType;
+use crate::{def_local_fmt::arg::ArgFileType, utils::hierarchy::Hierarchy};
 
 use super::{arg::MessageValue, ArgPath, LangMessage};
 
@@ -105,7 +105,7 @@ pub(super) trait MessageLoader: Sized {
                     file.display()
                 )
             });
-            let messages = Self::internal(&lang, &mut Vec::new(), nest);
+            let messages = Self::internal(&lang, &mut Hierarchy::new(), nest);
             lang_messages.push(LangMessage { lang, messages });
         }
         lang_messages
@@ -157,7 +157,7 @@ pub(super) trait MessageLoader: Sized {
                 )
             });
 
-            let messages = Self::internal(&lang, &mut Vec::new(), nest);
+            let messages = Self::internal(&lang, &mut Hierarchy::new(), nest);
             lang_messages.push(LangMessage {
                 lang: lang.to_string(),
                 messages,
@@ -168,7 +168,7 @@ pub(super) trait MessageLoader: Sized {
 
     fn internal(
         lang: &str,
-        hierarchy: &mut Vec<String>,
+        hierarchy: &mut Hierarchy<String>,
         value: Self::NestValue,
     ) -> Vec<super::Message> {
         let mut messages = Vec::new();
@@ -176,15 +176,10 @@ pub(super) trait MessageLoader: Sized {
             if let Some(value) = Self::value_as_str(&value) {
                 messages.push(super::Message {
                     value: MessageValue::Token(value.parse().unwrap_or_else(|e| {
-                        let mut display_key = if value.is_empty() {
-                            hierarchy.join(".")
-                        } else {
-                            String::new()
-                        };
-                        display_key.push_str(&key);
+                        let key = hierarchy.join(value);
                         panic!(
                             "Failed to parse message token for language '{}' and key '{}': {}",
-                            lang, display_key, e
+                            lang, key, e
                         )
                     })),
                     key,
@@ -192,12 +187,7 @@ pub(super) trait MessageLoader: Sized {
                 continue;
             }
             let nest = Self::value_to_nest(value).unwrap_or_else(|| {
-                let mut display_key = if key.is_empty() {
-                    hierarchy.join(".")
-                } else {
-                    String::new()
-                };
-                display_key.push_str(&key);
+                let display_key = hierarchy.join(&key);
                 panic!(
                     "Expected a string or {} for language '{}' and key '{}'",
                     Self::NEST_VALUE_NAME,
@@ -206,9 +196,8 @@ pub(super) trait MessageLoader: Sized {
                 )
             });
             let temp_key = key.clone();
-            hierarchy.push(temp_key);
-            let nest_messages = Self::internal(lang, hierarchy, nest);
-            hierarchy.pop();
+            let nest_messages =
+                hierarchy.process(temp_key, |hierarchy| Self::internal(lang, hierarchy, nest));
             messages.push(super::Message {
                 key,
                 value: MessageValue::Nested(nest_messages),
