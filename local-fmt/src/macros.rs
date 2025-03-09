@@ -1,5 +1,7 @@
 use std::marker::PhantomData;
 
+use local_fmt_macros::gen_static_message;
+
 use crate::{panic_builder, StaticMessage};
 
 pub struct CheckStaticMessageArg<From, To>(PhantomData<(From, To)>);
@@ -21,17 +23,8 @@ impl<const M: usize, const N: usize> CheckStaticMessageArg<StaticMessage<N>, Sta
         if N == M {
             unsafe { std::mem::transmute::<StaticMessage<N>, StaticMessage<M>>(arg) }
         } else {
-            panic_builder!(
-            ["Error: A message with "],
-                [u = M],
-                [" arguments was expected, but received a message with "],
-                [u = N],
-                [" arguments. This occurred in the language '"],
-                [lang],
-                ["' with the key '"],
-                [key],
-                ["'. Please check the message definition and ensure the correct number of arguments."],
-            )
+            const MESSAGE: StaticMessage<4> = gen_static_message!("Error: A message with {0} arguments was expected, but received a message with {1} arguments. This occurred in the language '{2}' with the key '{3}'. Please check the message definition and ensure the correct number of arguments.");
+            panic_builder!(MESSAGE, [u = M], [u = N], [lang], [key],)
         }
     }
 }

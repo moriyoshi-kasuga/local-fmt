@@ -1,5 +1,7 @@
 use std::fmt::Display;
 
+use crate::UtilBufWrapper;
+
 use super::CreateMessageError;
 
 #[derive(Debug, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
@@ -92,6 +94,36 @@ impl<'a, const N: usize> RefMessage<'a, N> {
 
     pub const fn formats(&self) -> &'a [RefMessageFormat<'a>] {
         self.formats
+    }
+}
+
+impl<const N: usize> StaticMessage<N> {
+    /// # Safety
+    /// Ensure that the total of all characters does not exceed SIZE
+    pub const unsafe fn const_format<const SIZE: usize>(
+        &self,
+        args: &[&[u8]; N],
+    ) -> UtilBufWrapper<SIZE> {
+        let mut buf = [0u8; SIZE];
+        let mut total = 0;
+
+        let mut i = 0;
+        while i < self.formats.len() {
+            let text = match &self.formats[i] {
+                RefMessageFormat::RefText(text) => text.as_bytes(),
+                RefMessageFormat::Placeholder(n) => args[*n],
+            };
+            let len = text.len();
+            let mut j = 0;
+            while j < len {
+                buf[total] = text[j];
+                total += 1;
+                j += 1;
+            }
+            i += 1;
+        }
+
+        UtilBufWrapper::new(buf, total)
     }
 }
 

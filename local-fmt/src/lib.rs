@@ -1,10 +1,13 @@
 #![doc = include_str!(concat!("../", std::env!("CARGO_PKG_README")))]
 #![deny(clippy::unwrap_used, clippy::expect_used, clippy::panic)]
+#![allow(clippy::macro_metavars_in_unsafe)]
+
+extern crate self as local_fmt;
 
 use enum_table::{EnumTable, Enumable};
 
-pub(crate) mod dev_utils;
-pub(crate) use dev_utils::*;
+pub mod utils;
+pub use utils::*;
 
 pub mod message;
 pub use message::*;
