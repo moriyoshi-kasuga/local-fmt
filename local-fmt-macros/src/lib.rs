@@ -9,7 +9,8 @@
 /// * `name` - The name of the generated static message set.
 /// * `lang` - The enumeration representing the supported languages.
 /// * `message` - The struct containing the constant messages.
-/// * `supplier` - The language supplier, type is fn() -> Lang. It determines how the current language is selected
+/// * `supplier` - The language supplier, a function of type `fn() -> Lang`.
+///     It determines how the current language is selected dynamically at runtime.
 /// * `def location` - Specifies the location of the language definition files. This can be either:
 ///     * `lang_file` - The path to a single language definition file.
 ///     * `lang_folder` - The folder containing multiple language definition files, one for each language.
@@ -19,6 +20,18 @@
 /// * The `def location` expands to `CARGO_MANIFEST_DIR/{your_path}`, where `CARGO_MANIFEST_DIR`
 ///   is an environment variable representing the directory containing the Cargo.toml file of your project.
 ///   This ensures that paths are resolved relative to the project's root directory.
+///
+/// ## Message Nesting
+/// * The `message` struct can be nested, allowing for organized grouping of related messages.
+///   For example, you can have a struct for action messages nested within a main message struct.
+///   This helps in maintaining a clean and structured message hierarchy.
+///
+/// ## Static String Loading
+/// * If a message does not require any arguments, it can be loaded as a `&'static str`.
+///   This allows for efficient handling of static messages without the need for formatting.
+///   Simply define the message field as `&'static str` in your message struct.
+///
+/// # Example
 ///
 /// ## Example with `lang_file = "lang.toml"`
 ///
@@ -114,8 +127,8 @@
 /// }
 ///
 /// struct ActionMessages {
-///     pub attack: ConstMessage<0>,
-///     pub run: ConstMessage<0>,
+///     pub attack: &'static str,
+///     pub run: &'static str,
 /// }
 ///
 /// struct Messages {
