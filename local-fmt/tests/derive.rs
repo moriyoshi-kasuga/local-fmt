@@ -13,7 +13,7 @@ enum Lang {
 }
 
 struct Inner {
-    pub name: ConstMessage<0>,
+    pub name: &'static str,
 }
 
 struct Messages {
@@ -35,10 +35,10 @@ def_local_fmt!(
 #[test]
 fn normal() {
     assert_eq!(MESSAGES.hello.format(&["Rust"]), "Hello, world! Rust");
-    assert_eq!(MESSAGES.inner.name.format(&[]), "world");
+    assert_eq!(MESSAGES.inner.name, "world");
 
     *LANG.write().unwrap() = Lang::JA;
 
     assert_eq!(MESSAGES.hello.format(&["Rust"]), "こんにちは、世界！ Rust");
-    assert_eq!(MESSAGES.inner.name.format(&[]), "世界");
+    assert_eq!(MESSAGES.inner.name, "世界");
 }

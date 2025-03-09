@@ -41,9 +41,19 @@ impl LangMessage {
     }
 }
 
-fn message_token_to_token_stream(token: &MessageToken) -> TokenStream {
+fn message_token_to_token_stream(
+    ident: &Ident,
+    lang: &str,
+    name: &str,
+    token: &MessageToken,
+) -> TokenStream {
     match token.placeholder_max {
-        Some(_) => token.to_static_token_stream(),
+        Some(_) => {
+            let value = token.to_static_token_stream();
+            quote::quote! {
+                #ident: CheckConstMessageArg::check(#lang, #name, #value)
+            }
+        }
         None => {
             let value = token.values.iter().fold(String::new(), |mut acc, v| {
                 match v {
@@ -59,7 +69,7 @@ fn message_token_to_token_stream(token: &MessageToken) -> TokenStream {
             });
 
             quote::quote! {
-                #value
+                #ident: #value
             }
         }
     }
@@ -77,10 +87,7 @@ impl Message {
         match &field.fields {
             None => match &self.value {
                 MessageValue::Token(token) => {
-                    let value = message_token_to_token_stream(token);
-                    quote::quote! {
-                        #ident: CheckConstMessageArg::check(#lang, #name, #value)
-                    }
+                    message_token_to_token_stream(&ident, lang, name, token)
                 }
                 MessageValue::Nested(messages) => {
                     let mut token_stream = TokenStream::new();
@@ -98,10 +105,7 @@ impl Message {
             Some(fields) => match fields.iter().find(|(ty, _)| ty == &ident) {
                 None => match &self.value {
                     MessageValue::Token(token) => {
-                        let value = message_token_to_token_stream(token);
-                        quote::quote! {
-                            #ident: CheckConstMessageArg::check(#lang, #name, #value)
-                        }
+                        message_token_to_token_stream(&ident, lang, name, token)
                     }
                     MessageValue::Nested(_) => {
                         panic!(

@@ -13,8 +13,8 @@ enum Lang {
 }
 
 struct WordsMessages {
-    pub ownership: ConstMessage<0>,
-    pub compiler: ConstMessage<0>,
+    pub ownership: &'static str,
+    pub compiler: &'static str,
 }
 
 struct Messages {
@@ -52,14 +52,14 @@ fn main() {
 
     println!("{}", MESSAGES.welcome.format(&[&user]));
 
-    // println!(
-    //     "{}",
-    //     MESSAGES.rust.format(&[&user, MESSAGES.words.ownership])
-    // );
-    // println!(
-    //     "{}",
-    //     MESSAGES.rust.format(&[&user, MESSAGES.words.compiler])
-    // );
+    println!(
+        "{}",
+        MESSAGES.rust.format(&[&user, MESSAGES.words.ownership])
+    );
+    println!(
+        "{}",
+        MESSAGES.rust.format(&[&user, MESSAGES.words.compiler])
+    );
 
     println!("{}", MESSAGES.goodbye.format(&[&user]));
 }
