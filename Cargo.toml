@@ -3,7 +3,7 @@ resolver = "2"
 members = ["local-fmt", "local-fmt-macros", "local-fmt-macros-internal"]
 
 [workspace.package]
-version = "0.3.0"
+version = "0.4.0"
 edition = "2021"
 rust-version = "1.81"
 description = "This crate provides localizable format strings."
