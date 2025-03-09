@@ -1,6 +1,6 @@
 use std::marker::PhantomData;
 
-use crate::ConstMessage;
+use crate::{panic_builder, ConstMessage};
 
 pub struct CheckConstMessageArg<From, To>(PhantomData<(From, To)>);
 
@@ -20,7 +20,7 @@ impl<const M: usize, const N: usize> CheckConstMessageArg<ConstMessage<N>, Const
         if N == M {
             unsafe { std::mem::transmute::<ConstMessage<N>, ConstMessage<M>>(arg) }
         } else {
-            dev_macros::panic_builder!(
+            panic_builder!(
                 "Error: A message with ".as_bytes(),
                 M.to_ne_bytes(),
                 " arguments was expected, but received a message with ".as_bytes(),
@@ -74,25 +74,3 @@ impl<const M: usize, const N: usize> CheckConstMessageArg<ConstMessage<N>, Const
 //         )
 //     }
 // }
-
-mod dev_macros {
-    macro_rules! panic_builder {
-        ($($message:expr),* $(,)?) => {
-            {
-                let mut buffer = [0u8; 1024];
-                let mut i = 0;
-                $(
-                    let message = $message;
-                    while i < message.len() {
-                        buffer[i] = message[i];
-                        i += 1;
-                    }
-                )*
-                let message = unsafe { std::str::from_utf8_unchecked(&buffer) };
-                panic!("{}", message);
-            }
-        };
-    }
-
-    pub(super) use panic_builder;
-}

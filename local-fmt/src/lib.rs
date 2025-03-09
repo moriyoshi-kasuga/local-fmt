@@ -41,3 +41,23 @@ impl<L: Enumable + Copy, M, const N: usize> std::ops::Deref for LocalFmt<L, M, N
         self.get_message()
     }
 }
+
+macro_rules! panic_builder {
+        ($($message:expr),* $(,)?) => {
+            {
+                let mut buffer = [0u8; 1024];
+                let mut i = 0;
+                $(
+                    let message = $message;
+                    while i < message.len() {
+                        buffer[i] = message[i];
+                        i += 1;
+                    }
+                )*
+                let message = unsafe { std::str::from_utf8_unchecked(&buffer) };
+                panic!("{}", message);
+            }
+        };
+    }
+
+pub(crate) use panic_builder;

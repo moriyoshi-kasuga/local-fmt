@@ -1,5 +1,7 @@
 use std::{fmt::Display, str::FromStr};
 
+use crate::panic_builder;
+
 /// Represents different formats a message can take.
 #[derive(Debug, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum MessageFormat {
@@ -94,6 +96,12 @@ pub enum ConstMessageError {
     /// of 0 to N-1, where N is the number of expected arguments.
     #[error("Missing argument number: {number} is not found within the allowed range (0 <= number < {n}).")]
     WithoutNumber { number: usize, n: usize },
+    /// Error indicating that a placeholder is empty.
+    ///
+    /// This error occurs when a placeholder is empty.
+    /// This can happen when a placeholder is found without a number.
+    #[error("Empty placeholder found: a placeholder was opened but not closed properly. Ensure all placeholders are correctly formatted.")]
+    EmptyPlaceholder,
 }
 
 impl<const N: usize> ConstMessage<N> {
@@ -116,16 +124,29 @@ impl<const N: usize> ConstMessage<N> {
     pub const fn new_static(formats: &'static [MessageFormat]) -> Self {
         let formats = match Self::const_check(formats) {
             Ok(ok) => ok,
-            Err(err) => {
-                match err {
-                    ConstMessageError::InvalidNumber { .. } => {
-                        panic!("Invalid argument number: the provided number is out of the allowed range.")
-                    }
-                    ConstMessageError::WithoutNumber { .. } => {
-                        panic!("Argument number missing: not all required argument numbers are present.")
-                    }
+            Err(err) => match err {
+                ConstMessageError::InvalidNumber { number, n } => {
+                    panic_builder!(
+                        "Invalid argument number: ".as_bytes(),
+                        number.to_ne_bytes(),
+                        " is out of the allowed range (0 <= number < ".as_bytes(),
+                        n.to_ne_bytes(),
+                        ").".as_bytes()
+                    )
                 }
-            }
+                ConstMessageError::WithoutNumber { number, n } => {
+                    panic_builder!(
+                        "Missing argument number: ".as_bytes(),
+                        number.to_ne_bytes(),
+                        " is not found within the allowed range (0 <= number < ".as_bytes(),
+                        n.to_ne_bytes(),
+                        ").".as_bytes()
+                    )
+                }
+                ConstMessageError::EmptyPlaceholder => {
+                    panic!("Empty placeholder found: a placeholder was opened but not closed properly. Ensure all placeholders are correctly formatted.")
+                }
+            },
         };
 
         Self::Static(formats)
@@ -330,25 +351,39 @@ impl<const N: usize> FromStr for ConstMessage<N> {
                         }));
                     }
 
-                    let mut number = 0;
+                    let mut number = None::<usize>;
 
                     loop {
                         match bytes.next() {
                             Some(byte) => match byte {
                                 b'}' => {
-                                    formats.push(MessageFormat::Arg(number));
-                                    break;
+                                    if let Some(number) = number {
+                                        formats.push(MessageFormat::Arg(number));
+                                        break;
+                                    } else {
+                                        return Err(ConstMessageError::EmptyPlaceholder);
+                                    }
                                 }
                                 b'0'..=b'9' => {
-                                    number *= 10;
-                                    number += (byte - b'0') as usize;
+                                    let mut num = number.unwrap_or(0);
+                                    num *= 10;
+                                    num += (byte - b'0') as usize;
+                                    number = Some(num);
                                 }
-                                _ => {
-                                    return Err(ConstMessageError::InvalidNumber { number, n: N });
-                                }
+                                _ => match number {
+                                    Some(number) => {
+                                        return Err(ConstMessageError::InvalidNumber {
+                                            number,
+                                            n: N,
+                                        });
+                                    }
+                                    None => {
+                                        return Err(ConstMessageError::EmptyPlaceholder);
+                                    }
+                                },
                             },
                             None => {
-                                return Err(ConstMessageError::WithoutNumber { number, n: N });
+                                return Err(ConstMessageError::EmptyPlaceholder);
                             }
                         }
                     }
