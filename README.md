@@ -14,6 +14,14 @@
 It is designed to facilitate the creation of applications that support multiple languages
 by allowing developers to define messages in a structured and maintainable way.
 
+## Crate cfg feature
+
+- **macros**: include `gen_const_messa`, `gen_message` and `def_local_fmt` macros
+  if you use `def_local_fmt`, chose from below
+- **macros-toml**: parseable toml at `def_local_fmt`
+- **macros-json**: parseable json at `def_local_fmt`
+- **macros-yaml**: parseable yaml `def_local_fmt`
+
 ## Features
 
 - **Localizable Messages**: Define messages in multiple languages using TOML or JSON files.
@@ -26,8 +34,8 @@ by allowing developers to define messages in a structured and maintainable way.
 Below is an example of how to use `local-fmt` in a Rust project. This example demonstrates creating a localizable format string and using it to format a message.
 
 ```rust
-# #![cfg(feature = "macros")]
-# #![cfg(feature = "macros-toml")]
+#![cfg(feature = "macros")]
+#![cfg(feature = "macros-toml")]
 /// This example demonstrates how to use the `local-fmt` library to create
 /// and use localizable format strings in a Rust application.
 
@@ -68,6 +76,14 @@ fn main() {
 }
 ```
 
+For more detailed information on `def_local_fmt`, see the [documentation](https://docs.rs/local-fmt/macro.def_local_fmt.html).
+
 ## Documentation
 
 For more detailed information, please refer to the [documentation][docsrs].
+
+## License
+
+Licensed under
+
+- [MIT license](https://github.com/moriyoshi-kasuga/local-fmt/blob/main/LICENSE)
