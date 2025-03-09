@@ -41,7 +41,7 @@ Below is an example of how to use `local-fmt` in a Rust project. This example de
 
 use std::sync::RwLock;
 use enum_table::Enumable;
-use local_fmt::{def_local_fmt, ConstMessage};
+use local_fmt::{def_local_fmt, StaticMessage};
 
 #[derive(Clone, Copy, Enumable)]
 enum Lang {
@@ -50,7 +50,7 @@ enum Lang {
 }
 
 struct Messages {
-    pub hello: ConstMessage<1>,
+    pub hello: StaticMessage<1>,
 }
 
 static LANG: RwLock<Lang> = RwLock::new(Lang::EN);

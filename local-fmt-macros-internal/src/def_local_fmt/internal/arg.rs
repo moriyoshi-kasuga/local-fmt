@@ -51,7 +51,7 @@ fn message_token_to_token_stream(
         Some(_) => {
             let value = token.to_static_token_stream();
             quote::quote! {
-                #ident: CheckConstMessageArg::check(#lang, #name, #value)
+                #ident: CheckStaticMessageArg::check(#lang, #name, #value)
             }
         }
         None => {

@@ -2,16 +2,16 @@ use std::marker::PhantomData;
 
 use crate::{panic_builder, StaticMessage};
 
-pub struct CheckConstMessageArg<From, To>(PhantomData<(From, To)>);
+pub struct CheckStaticMessageArg<From, To>(PhantomData<(From, To)>);
 
-impl<From, To> CheckConstMessageArg<From, To> {
+impl<From, To> CheckStaticMessageArg<From, To> {
     #[allow(clippy::new_without_default)]
     pub const fn new() -> Self {
         Self(PhantomData)
     }
 }
 
-impl<const M: usize, const N: usize> CheckConstMessageArg<StaticMessage<N>, StaticMessage<M>> {
+impl<const M: usize, const N: usize> CheckStaticMessageArg<StaticMessage<N>, StaticMessage<M>> {
     #[track_caller]
     pub const fn check(
         lang: &'static str,
@@ -36,8 +36,8 @@ impl<const M: usize, const N: usize> CheckConstMessageArg<StaticMessage<N>, Stat
     }
 }
 
-// impl<const N: usize> CheckConstMessageArg<ConstMessage<N>, &'static str> {
-//     pub const fn check(lang: &'static str, key: &'static str, _: ConstMessage<N>) -> &'static str {
+// impl<const N: usize> CheckStaticMessageArg<StaticMessage<N>, &'static str> {
+//     pub const fn check(lang: &'static str, key: &'static str, _: StaticMessage<N>) -> &'static str {
 //         dev_macros::panic_builder!(
 //             "Error: A message with no arguments was expected, but received a message with "
 //                 .as_bytes(),
@@ -52,7 +52,7 @@ impl<const M: usize, const N: usize> CheckConstMessageArg<StaticMessage<N>, Stat
 //     }
 // }
 
-// impl CheckConstMessageArg<&'static str, &'static str> {
+// impl CheckStaticMessageArg<&'static str, &'static str> {
 //     pub const fn check(
 //         _lang: &'static str,
 //         _key: &'static str,
@@ -62,8 +62,8 @@ impl<const M: usize, const N: usize> CheckConstMessageArg<StaticMessage<N>, Stat
 //     }
 // }
 
-// impl<const M: usize> CheckConstMessageArg<&'static str, ConstMessage<M>> {
-//     pub const fn check(lang: &'static str, key: &'static str, _: &'static str) -> ConstMessage<M> {
+// impl<const M: usize> CheckStaticMessageArg<&'static str, StaticMessage<M>> {
+//     pub const fn check(lang: &'static str, key: &'static str, _: &'static str) -> StaticMessage<M> {
 //         dev_macros::panic_builder!(
 //             "Error: A message with ".as_bytes(),
 //             M.to_ne_bytes(),
