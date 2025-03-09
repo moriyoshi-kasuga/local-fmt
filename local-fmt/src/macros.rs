@@ -1,6 +1,6 @@
 use std::marker::PhantomData;
 
-use crate::{panic_builder, ConstMessage};
+use crate::{panic_builder, StaticMessage};
 
 pub struct CheckConstMessageArg<From, To>(PhantomData<(From, To)>);
 
@@ -11,15 +11,15 @@ impl<From, To> CheckConstMessageArg<From, To> {
     }
 }
 
-impl<const M: usize, const N: usize> CheckConstMessageArg<ConstMessage<N>, ConstMessage<M>> {
+impl<const M: usize, const N: usize> CheckConstMessageArg<StaticMessage<N>, StaticMessage<M>> {
     #[track_caller]
     pub const fn check(
         lang: &'static str,
         key: &'static str,
-        arg: ConstMessage<N>,
-    ) -> ConstMessage<M> {
+        arg: StaticMessage<N>,
+    ) -> StaticMessage<M> {
         if N == M {
-            unsafe { std::mem::transmute::<ConstMessage<N>, ConstMessage<M>>(arg) }
+            unsafe { std::mem::transmute::<StaticMessage<N>, StaticMessage<M>>(arg) }
         } else {
             panic_builder!(
             ["Error: A message with "],

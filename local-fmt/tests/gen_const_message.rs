@@ -1,8 +1,8 @@
-use local_fmt::{gen_const_message, ConstMessage};
+use local_fmt::{gen_const_message, StaticMessage};
 
 #[test]
 fn arg_1() {
-    const MESSAGE: ConstMessage<1> = gen_const_message!("Hello! {0}");
+    const MESSAGE: StaticMessage<1> = gen_const_message!("Hello! {0}");
     let text = MESSAGE.format(&["World!"]);
     assert_eq!(text, "Hello! World!");
 }
@@ -10,7 +10,7 @@ fn arg_1() {
 #[test]
 fn arg_2() {
     const HELLO: &str = "Hello";
-    const MESSAGE: ConstMessage<2> = gen_const_message!("{HELLO} {0} World! {1}");
+    const MESSAGE: StaticMessage<2> = gen_const_message!("{HELLO} {0} World! {1}");
 
     let text = MESSAGE.format(&["Beautiful", "Rust!"]);
     assert_eq!(text, "Hello Beautiful World! Rust!");
@@ -19,7 +19,7 @@ fn arg_2() {
 #[test]
 fn duplicate_arg() {
     const HELLO: &str = "Hello";
-    const MESSAGE: ConstMessage<1> = gen_const_message!("{HELLO} {0} World! {0}");
+    const MESSAGE: StaticMessage<1> = gen_const_message!("{HELLO} {0} World! {0}");
 
     let text = MESSAGE.format(&["Beautiful"]);
     assert_eq!(text, "Hello Beautiful World! Beautiful");

@@ -25,7 +25,7 @@ impl Args {
         if is_static {
             Ok(token.to_static_token_stream())
         } else {
-            Ok(token.to_vec_token_stream())
+            Ok(token.to_alloc_token_stream())
         }
     }
 }

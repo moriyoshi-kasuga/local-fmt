@@ -1,29 +1,52 @@
 #![cfg(feature = "serde")]
 
-use local_fmt::{gen_const_message, ConstMessage, MessageFormat};
+use local_fmt::{AllocMessage, AllocMessageFormat, RefMessageFormat, StaticMessage};
 
-#[derive(serde::Serialize, serde::Deserialize)]
-struct Test {
-    hello: ConstMessage<1>,
+#[derive(serde::Serialize)]
+struct Static {
+    message: StaticMessage<1>,
+}
+
+#[derive(Debug, PartialEq, serde::Serialize, serde::Deserialize)]
+struct Alloc {
+    message: AllocMessage<1>,
 }
 
 #[test]
-fn ser() {
-    let message = gen_const_message!("Hello! {0}");
-    let test = Test { hello: message };
-    let text = toml::to_string(&test).unwrap();
-    assert_eq!(text, "hello = \"Hello! {0}\"\n");
+fn ser_static() {
+    let static_struct = Static {
+        message: StaticMessage::<1>::new_panic(&[
+            RefMessageFormat::RefText("Hello, world! "),
+            RefMessageFormat::Placeholder(0),
+        ]),
+    };
+
+    let text = toml::to_string(&static_struct).unwrap();
+    assert_eq!(text, "message = \"Hello, world! {0}\"\n");
 }
 
 #[test]
-fn de() {
-    let text = "hello = 'Hello! {0}'";
-    let test: Test = toml::from_str(text).unwrap();
+fn ser_alloc() {
+    let alloc_struct = Alloc {
+        message: AllocMessage::new_panic(vec![
+            AllocMessageFormat::AllocText("Hello, alloc! ".to_string()),
+            AllocMessageFormat::Placeholder(0),
+        ]),
+    };
 
-    let text = ConstMessage::<1>::Vec(vec![
-        MessageFormat::Text("Hello! ".to_string()),
-        MessageFormat::Arg(0),
+    let text = toml::to_string(&alloc_struct).unwrap();
+    assert_eq!(text, "message = \"Hello, alloc! {0}\"\n");
+}
+
+#[test]
+fn de_alloc() {
+    let text = "message = 'Hello, alloc! {0}'";
+    let test: Alloc = toml::from_str(text).unwrap();
+
+    let expected_message = AllocMessage::new_panic(vec![
+        AllocMessageFormat::AllocText("Hello, alloc! ".to_string()),
+        AllocMessageFormat::Placeholder(0),
     ]);
 
-    assert_eq!(test.hello, text);
+    assert_eq!(test.message, expected_message);
 }

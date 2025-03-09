@@ -13,38 +13,47 @@ pub enum MessageTokenValue {
 }
 
 impl MessageTokenValue {
-    fn to_token_stream(&self, ident_placeholder: fn(&Ident) -> TokenStream) -> TokenStream {
+    pub fn to_alloc_token_stream(&self) -> TokenStream {
         match self {
             MessageTokenValue::StaticText(s) => {
-                let s = s.as_str();
                 quote::quote! {
-                    local_fmt::MessageFormat::StaticText(#s),
+                    local_fmt::AllocMessageFormat::AllocText(#s.to_string()),
                 }
             }
             MessageTokenValue::PlaceholderArg(n) => {
                 let n = *n;
                 quote::quote! {
-                    local_fmt::MessageFormat::Arg(#n),
+                    local_fmt::AllocMessageFormat::Placeholder(#n),
                 }
             }
-            MessageTokenValue::PlaceholderIdent(ident) => ident_placeholder(ident),
+            MessageTokenValue::PlaceholderIdent(ident) => {
+                quote::quote! {
+                    local_fmt::AllocMessageFormat::AllocText(#ident),
+                }
+            }
         }
     }
 
-    pub fn to_alloc_token_stream(&self) -> TokenStream {
-        self.to_token_stream(|ident| {
-            quote::quote! {
-                local_fmt::MessageFormat::Text(#ident),
-            }
-        })
-    }
-
     pub fn to_static_token_stream(&self) -> TokenStream {
-        self.to_token_stream(|ident| {
-            quote::quote! {
-                local_fmt::MessageFormat::StaticText(#ident),
+        match self {
+            MessageTokenValue::StaticText(s) => {
+                let s = s.as_str();
+                quote::quote! {
+                    local_fmt::RefMessageFormat::RefText(#s),
+                }
             }
-        })
+            MessageTokenValue::PlaceholderArg(n) => {
+                let n = *n;
+                quote::quote! {
+                    local_fmt::RefMessageFormat::Placeholder(#n),
+                }
+            }
+            MessageTokenValue::PlaceholderIdent(ident) => {
+                quote::quote! {
+                    local_fmt::RefMessageFormat::RefText(#ident),
+                }
+            }
+        }
     }
 }
 
@@ -91,7 +100,7 @@ impl MessageToken {
         })
     }
 
-    pub fn to_vec_token_stream(&self) -> TokenStream {
+    pub fn to_alloc_token_stream(&self) -> TokenStream {
         let count = self.placeholder_max.map_or(0, |v| v + 1);
         let values = self
             .values
@@ -100,11 +109,11 @@ impl MessageToken {
             .collect::<Vec<TokenStream>>();
 
         quote::quote! {
-            local_fmt::ConstMessage::<#count>::Vec(vec![
+            unsafe { local_fmt::AllocMessage::<#count>::new_unchecked(vec![
                 #(
                     #values
                 )*
-            ])
+            ]) }
         }
     }
 
@@ -117,11 +126,11 @@ impl MessageToken {
             .collect::<Vec<TokenStream>>();
 
         quote::quote! {
-            local_fmt::ConstMessage::<#count>::Static(&[
+            unsafe { local_fmt::StaticMessage::<#count>::new_unchecked(&[
                 #(
                     #values
                 )*
-            ])
+            ]) }
         }
     }
 }

@@ -4,7 +4,7 @@
 use std::sync::RwLock;
 
 use enum_table::Enumable;
-use local_fmt::{def_local_fmt, ConstMessage};
+use local_fmt::{def_local_fmt, StaticMessage};
 
 #[derive(Clone, Copy, Enumable)]
 enum Lang {
@@ -19,9 +19,9 @@ struct WordsMessages {
 
 struct Messages {
     pub words: WordsMessages,
-    pub welcome: ConstMessage<1>,
-    pub rust: ConstMessage<2>,
-    pub goodbye: ConstMessage<1>,
+    pub welcome: StaticMessage<1>,
+    pub rust: StaticMessage<2>,
+    pub goodbye: StaticMessage<1>,
 }
 
 static LANG: RwLock<Lang> = RwLock::new(Lang::EN);
