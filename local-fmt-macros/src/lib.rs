@@ -164,6 +164,47 @@ pub fn def_local_fmt(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
         .into()
 }
 
+/// Generates a static message with placeholders for arguments.
+///
+/// This macro creates a `StaticMessage` that can be used to format strings with
+/// a fixed number of arguments. The placeholders in the message are denoted by
+/// `{0}`, `{1}`, etc., which correspond to the arguments provided during formatting.
+///
+/// # Notes
+///
+/// - The number of placeholders in the message must match the number of arguments
+///   specified in the `StaticMessage` type.
+/// - The macro supports using constants within the message string.
+///
+/// # Examples
+///
+/// ```rust
+/// use local_fmt::{gen_static_message, StaticMessage};
+///
+/// // Example with argument
+/// {
+///     const MESSAGE: StaticMessage<1> = gen_static_message!("Hello! {0}");
+///     let text = MESSAGE.format(&["World!"]);
+///     assert_eq!(text, "Hello! World!");
+/// }
+///
+///
+/// // Example with const placeholder
+/// {
+///     const HELLO: &str = "Hello";
+///     const MESSAGE: StaticMessage<2> = gen_static_message!("{HELLO} {0} World! {1}");
+///     let text = MESSAGE.format(&["Beautiful", "Rust!"]);
+///     assert_eq!(text, "Hello Beautiful World! Rust!");
+/// }
+///
+/// // Example with duplicate arguments
+/// {
+///     const MESSAGE: StaticMessage<1> = gen_static_message!("{0} World! {0}");
+///     let text = MESSAGE.format(&["Beautiful"]);
+///     assert_eq!(text, "Beautiful World! Beautiful");
+/// }
+/// ```
+///
 #[proc_macro]
 pub fn gen_static_message(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let args = syn::parse_macro_input!(input as local_fmt_macros_internal::util_macro::Args);
@@ -173,6 +214,44 @@ pub fn gen_static_message(input: proc_macro::TokenStream) -> proc_macro::TokenSt
         .into()
 }
 
+/// Generates an allocatable message with placeholders for arguments.
+///
+/// This macro creates an `AllocMessage` that can be used to format strings with
+/// a fixed number of arguments. The placeholders in the message are denoted by
+/// `{0}`, `{1}`, etc., which correspond to the arguments provided during formatting.
+///
+/// # Notes
+///
+/// - The number of placeholders in the message must match the number of arguments
+///   specified in the `AllocMessage` type.
+/// - The macro supports using ident within the message string.
+///
+/// # Examples
+///
+/// ```rust
+/// use local_fmt::{gen_alloc_message, AllocMessage};
+///
+/// // Example with argument
+/// {
+///     let message: AllocMessage<1> = gen_alloc_message!("Hello! {0}");
+///     let text = message.format(&["World!"]);
+///     assert_eq!(text, "Hello! World!");
+/// }
+///
+/// // Example with string placeholder
+/// {
+///     let hello: String = "Hello".to_string();
+///     let message: AllocMessage<2> = gen_alloc_message!("{hello} {0} World! {1}");
+///     let text = message.format(&["Beautiful", "Rust!"]);
+///     assert_eq!(text, "Hello Beautiful World! Rust!");
+/// }
+///
+/// // Example with duplicate arguments
+/// {
+///     let message: AllocMessage<1> = gen_alloc_message!("{0} World! {0}");
+///     let text = message.format(&["Beautiful"]);
+///     assert_eq!(text, "Beautiful World! Beautiful");
+/// }
 #[proc_macro]
 pub fn gen_alloc_message(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let args = syn::parse_macro_input!(input as local_fmt_macros_internal::util_macro::Args);
