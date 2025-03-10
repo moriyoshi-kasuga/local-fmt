@@ -1,7 +1,14 @@
 use std::str::FromStr;
 
 use proc_macro2::TokenStream;
+use quote::ToTokens;
 use syn::Ident;
+
+mod alloc;
+pub use alloc::*;
+
+mod static_ref;
+pub use static_ref::*;
 
 pub enum MessageTokenValue {
     StaticText(String),
@@ -65,26 +72,31 @@ pub enum MessageTokenValueError {
     EmptyPlaceholder,
 }
 
-pub struct MessageToken {
-    pub values: Vec<MessageTokenValue>,
+pub trait MessageValue: ToTokens {
+    const MESSAGE_IDENT: &'static str;
+    const MESSAGE_ARG_WRAPPER: &'static str;
+
+    fn as_arg(&self) -> Option<usize>;
+}
+
+pub struct MessageToken<V: MessageValue> {
+    pub values: Vec<V>,
     pub placeholder_max: Option<usize>,
 }
 
-impl MessageToken {
-    pub fn new(values: Vec<MessageTokenValue>) -> Result<Self, MessageTokenValueError> {
-        let max = values
-            .iter()
-            .filter_map(|v| match v {
-                MessageTokenValue::PlaceholderArg(n) => Some(*n),
-                _ => None,
-            })
-            .max();
+impl<V: MessageValue> MessageToken<V> {
+    pub fn args(&self) -> usize {
+        self.placeholder_max.map_or(0, |v| v + 1)
+    }
+
+    pub fn new(values: Vec<V>) -> Result<Self, MessageTokenValueError> {
+        let max = values.iter().filter_map(|v| v.as_arg()).max();
 
         if let Some(max) = max {
             let mut flag = vec![false; max + 1];
             for v in &values {
-                if let MessageTokenValue::PlaceholderArg(n) = v {
-                    flag[*n] = true;
+                if let Some(n) = v.as_arg() {
+                    flag[n] = true;
                 }
             }
             for (i, v) in flag.iter().enumerate() {
@@ -135,7 +147,31 @@ impl MessageToken {
     }
 }
 
-impl FromStr for MessageToken {
+impl<V: MessageValue> ToTokens for MessageToken<V> {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        let count = self.args();
+        let values = self
+            .values
+            .iter()
+            .map(|v| v.to_token_stream())
+            .collect::<Vec<TokenStream>>();
+
+        let ident = V::MESSAGE_IDENT;
+        let wrapper = V::MESSAGE_ARG_WRAPPER;
+
+        let token = quote::quote! {
+            unsafe { local_fmt::#ident::<#count>::new_unchecked(#wrapper[
+                #(
+                    #values
+                )*
+            ]) }
+        };
+
+        tokens.extend(token);
+    }
+}
+
+impl<V: MessageValue> FromStr for MessageToken<V> {
     type Err = MessageTokenValueError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
