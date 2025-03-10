@@ -82,13 +82,13 @@ macro_rules! fmt_builder {
     (@ $arg:ident) => {
         $arg.as_bytes()
     };
-    (@ b = $arg:ident) => {
+    (@ b; $arg:ident) => {
         $arg
     };
-    (@ u = $arg:expr ) => {
+    (@ u; $arg:expr ) => {
         $crate::const_u128_to_str($arg as u128).buffer()
     };
-    (@ i = $arg:expr) => {
+    (@ i; $arg:expr) => {
         $crate::const_i128_to_str($arg as i128).buffer()
     };
     ($message:ident, $([$($args:tt)+]),* $(,)?) => {

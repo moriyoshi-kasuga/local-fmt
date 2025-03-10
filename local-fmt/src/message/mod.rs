@@ -42,13 +42,13 @@ impl CreateMessageError {
                 const MESSAGE: StaticMessage<2> = gen_static_message!(
                     "Invalid argument number: {0} is out of the allowed range (0 <= number < {1})."
                 );
-                panic_builder!(MESSAGE, [u = *number], [u = *n])
+                panic_builder!(MESSAGE, [u; *number], [u; *n])
             }
             Self::WithoutNumber { number, n } => {
                 const MESSAGE: StaticMessage<2> = gen_static_message!(
                     "Missing argument number: {0} is not found within the allowed range (0 <= number < {1})."
                 );
-                panic_builder!(MESSAGE, [u = *number], [u = *n])
+                panic_builder!(MESSAGE, [u; *number], [u; *n])
             }
             Self::EmptyPlaceholder => {
                 panic!("Empty placeholder found: a placeholder was opened but not closed properly. Ensure all placeholders are correctly formatted.")
