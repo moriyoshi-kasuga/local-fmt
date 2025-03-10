@@ -18,6 +18,7 @@ proc-macro = true
 default = []
 toml = ["local-fmt-macros-internal/toml"]
 json = ["local-fmt-macros-internal/json"]
+yaml = ["local-fmt-macros-internal/yaml"]
 
 [dependencies]
 local-fmt-macros-internal = { version = "^0", path = "../local-fmt-macros-internal" }

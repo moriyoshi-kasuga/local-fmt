@@ -16,6 +16,7 @@ default = []
 macros = ["dep:local-fmt-macros"]
 macros-toml = ["macros", "local-fmt-macros/toml"]
 macros-json = ["macros", "local-fmt-macros/json"]
+macros-yaml = ["macros", "local-fmt-macros/yaml"]
 serde = ["dep:serde"]
 
 [dependencies]
