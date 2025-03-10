@@ -29,7 +29,11 @@ syn = { workspace = true, default-features = false, features = [
 ] }
 
 [dev-dependencies]
-local-fmt = { path = "../local-fmt", features = ["macros"] }
+local-fmt = { path = "../local-fmt", features = [
+    "macros",
+    "macros-toml",
+    "macros-json",
+] }
 enum-table = "0.2"
 
 [lints]
