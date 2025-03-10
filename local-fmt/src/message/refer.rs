@@ -1,12 +1,14 @@
 use std::fmt::Display;
 
-use crate::UtilBufWrapper;
+use crate::{const_i128_to_str, const_u128_to_str, UtilBufWrapper};
 
 use super::CreateMessageError;
 
 #[derive(Debug, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum RefMessageFormat<'a> {
     RefText(&'a str),
+    UNumber(u128),
+    INumber(i128),
     Placeholder(usize),
 }
 
@@ -14,6 +16,8 @@ impl Display for RefMessageFormat<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             RefMessageFormat::RefText(text) => write!(f, "{}", text),
+            RefMessageFormat::UNumber(n) => write!(f, "{}", n),
+            RefMessageFormat::INumber(n) => write!(f, "{}", n),
             RefMessageFormat::Placeholder(n) => write!(f, "{{{}}}", n),
         }
     }
@@ -77,6 +81,8 @@ impl<'a, const N: usize> RefMessage<'a, N> {
         for format in self.formats {
             match format {
                 RefMessageFormat::RefText(text) => result.push_str(text),
+                RefMessageFormat::UNumber(n) => result.push_str(&n.to_string()),
+                RefMessageFormat::INumber(n) => result.push_str(&n.to_string()),
                 RefMessageFormat::Placeholder(n) => result.push_str(args[*n]),
             }
         }
@@ -109,18 +115,28 @@ impl<const N: usize> StaticMessage<N> {
 
         let mut i = 0;
         while i < self.formats.len() {
-            let text = match &self.formats[i] {
-                RefMessageFormat::RefText(text) => text.as_bytes(),
-                RefMessageFormat::Placeholder(n) => args[*n],
-            };
-            let len = text.len();
-            let mut j = 0;
-            while j < len {
-                buf[total] = text[j];
-                total += 1;
-                j += 1;
+            macro_rules! process {
+                ($bytes:expr) => {
+                    match $bytes {
+                        bytes => {
+                            let len = bytes.len();
+                            let mut j = 0;
+                            while j < len {
+                                buf[total] = bytes[j];
+                                total += 1;
+                                j += 1;
+                            }
+                            i += 1;
+                        }
+                    }
+                };
             }
-            i += 1;
+            match &self.formats[i] {
+                RefMessageFormat::RefText(text) => process!(text.as_bytes()),
+                RefMessageFormat::UNumber(n) => process!(const_u128_to_str(*n).buffer()),
+                RefMessageFormat::INumber(n) => process!(const_i128_to_str(*n).buffer()),
+                RefMessageFormat::Placeholder(n) => process!(args[*n]),
+            }
         }
 
         UtilBufWrapper::new(buf, total)
