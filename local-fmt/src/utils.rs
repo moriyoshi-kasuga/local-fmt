@@ -102,12 +102,14 @@ pub const fn const_i128_to_str(n: i128) -> UtilBufWrapper<40> {
 ///     // panic_builder!(message, ["This"], ["is"], ["a test"]);
 /// };
 /// ```
+/// ```text
 /// error[E0080]: evaluation of constant value failed
 ///  --> local-fmt/src/utils.rs:103:5
 ///   |
 /// 9 |     panic_builder!(message, ["This"], ["is"], ["a test"]);
 ///   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ the evaluated program panicked at 'Error: This is a test', local-fmt/src/utils.rs:9:5
 ///   |
+/// ```
 ///
 #[macro_export]
 macro_rules! panic_builder {

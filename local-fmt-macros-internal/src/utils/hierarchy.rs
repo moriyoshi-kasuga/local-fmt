@@ -45,7 +45,7 @@ impl<I> Hierarchy<I> {
 impl<I: AsRef<str>> Hierarchy<I> {
     /// Join the items in the hierarchy with the current item.
     /// The items are joined with a period.
-    /// The generic type must implement [AsRef<str>].
+    /// The generic type must implement [`AsRef<str>`].
     ///
     /// Example usage of [Hierarchy]
     pub fn join(&self, current: &str) -> String {

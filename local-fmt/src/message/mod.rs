@@ -4,7 +4,6 @@ pub mod alloc;
 pub use alloc::*;
 
 pub mod refer;
-use local_fmt_macros::gen_static_message;
 pub use refer::*;
 
 /// Represents errors that can occur when working with constant messages.
@@ -39,15 +38,28 @@ impl CreateMessageError {
     pub const fn panic(&self) -> ! {
         match self {
             Self::InvalidNumber { number, n } => {
-                const MESSAGE: StaticMessage<2> = gen_static_message!(
-                    "Invalid argument number: {0} is out of the allowed range (0 <= number < {1})."
-                );
+                const MESSAGE: StaticMessage<2> = local_fmt::StaticMessage::new_panic(&[
+                    local_fmt::RefMessageFormat::RefText("Invalid argument number: "),
+                    local_fmt::RefMessageFormat::Placeholder(0usize),
+                    local_fmt::RefMessageFormat::RefText(
+                        " is out of the allowed range (0 <= number < ",
+                    ),
+                    local_fmt::RefMessageFormat::Placeholder(1usize),
+                    local_fmt::RefMessageFormat::RefText(")."),
+                ]);
                 panic_builder!(MESSAGE, [u; *number], [u; *n])
             }
             Self::WithoutNumber { number, n } => {
-                const MESSAGE: StaticMessage<2> = gen_static_message!(
-                    "Missing argument number: {0} is not found within the allowed range (0 <= number < {1})."
-                );
+                const MESSAGE: StaticMessage<2> = local_fmt::StaticMessage::<2usize>::new_panic(&[
+                    local_fmt::RefMessageFormat::RefText("Missing argument number: "),
+                    local_fmt::RefMessageFormat::Placeholder(0usize),
+                    local_fmt::RefMessageFormat::RefText(
+                        " is not found within the allowed range (0 <= number < ",
+                    ),
+                    local_fmt::RefMessageFormat::Placeholder(1usize),
+                    local_fmt::RefMessageFormat::RefText(")."),
+                ]);
+
                 panic_builder!(MESSAGE, [u; *number], [u; *n])
             }
             Self::EmptyPlaceholder => {
