@@ -66,12 +66,12 @@ impl ToTokens for StaticMessageValue {
             }
             StaticMessageValue::UNumberIdent(ident) => {
                 tokens.extend(quote::quote! {
-                    local_fmt::RefMessageFormat::UNumber(#ident),
+                    local_fmt::RefMessageFormat::UNumber(#ident as u128),
                 });
             }
             StaticMessageValue::INumberIdent(ident) => {
                 tokens.extend(quote::quote! {
-                    local_fmt::RefMessageFormat::INumber(#ident),
+                    local_fmt::RefMessageFormat::INumber(#ident as i128),
                 });
             }
             StaticMessageValue::Placeholder(n) => {

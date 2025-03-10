@@ -48,13 +48,8 @@ fn message_token_to_token_stream(
     name: &str,
     token: &StaticMessage,
 ) -> TokenStream {
-    match token.placeholder_max {
-        Some(_) => {
-            let value = token.to_token_stream();
-            quote::quote! {
-                #ident: CheckStaticMessageArg::check(#lang, #name, #value)
-            }
-        }
+    let value = match token.placeholder_max {
+        Some(_) => token.to_token_stream(),
         None => {
             let value = token.values.iter().fold(String::new(), |mut acc, v| {
                 match v {
@@ -65,11 +60,11 @@ fn message_token_to_token_stream(
                 }
                 acc
             });
-
-            quote::quote! {
-                #ident: #value
-            }
+            value.to_token_stream()
         }
+    };
+    quote::quote! {
+        #ident: check_static_message_arg(#lang, #name, &#value)
     }
 }
 
@@ -85,7 +80,7 @@ impl Message {
         match &field.fields {
             None => match &self.value {
                 MessageValue::Token(token) => {
-                    message_token_to_token_stream(&ident, lang, name, token)
+                    message_token_to_token_stream(&ident, lang, &hierarchy.join(name), token)
                 }
                 MessageValue::Nested(messages) => {
                     let mut token_stream = TokenStream::new();
@@ -103,7 +98,7 @@ impl Message {
             Some(fields) => match fields.iter().find(|(ty, _)| ty == &ident) {
                 None => match &self.value {
                     MessageValue::Token(token) => {
-                        message_token_to_token_stream(&ident, lang, name, token)
+                        message_token_to_token_stream(&ident, lang, &hierarchy.join(name), token)
                     }
                     MessageValue::Nested(_) => {
                         panic!(

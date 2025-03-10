@@ -18,7 +18,7 @@ pub fn generate(args: Args) -> syn::Result<TokenStream> {
     let supplier = args.supplier;
     let token = quote::quote! {
         pub const #name: local_fmt::LocalFmt<#lang, #message, {<#lang as enum_table::Enumable>::COUNT}> = {
-            use local_fmt::macros::CheckStaticMessageArg;
+            use local_fmt::macros::check_static_message_arg;
 
             let messages = enum_table::et!(#lang, #message, |lang| match lang {
                 #(
