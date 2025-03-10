@@ -34,6 +34,13 @@ enum-table = "0.2" # Required if you use `def_local_fmt` macro or
 local_fmt = { version = "0.5", features = ["macros", "macros-toml"] }
 ```
 
+`enum_table` is like a `HashMap` but uses enums, allowing you to create a constant `EnumTable`.  
+This is useful for storing structures for each language (`Lang`).  
+It ensures that all necessary definitions are present for every language at compile time,  
+rather than checking at runtime like a regular `HashMap`.  
+This means errors can be caught earlier in the development process.  
+I am the creator of `enum_table`, and you can view the [repository here](https://github.com/moriyoshi-kasuga/enum-table).
+
 ## Key Features
 
 - **Localizable Messages**: Easily define messages in multiple languages using TOML, JSON, or YAML files.
@@ -54,10 +61,10 @@ This example shows how to create a localizable format string and use it to forma
 #![cfg(feature = "macros-toml")]
 
 use std::sync::RwLock;
-use enum_table::Enumable;
 use local_fmt::{def_local_fmt, StaticMessage};
 
-#[derive(Clone, Copy, Enumable)]
+// required lang is impl `enum_table::Enumable`
+#[derive(Clone, Copy, enum_table::Enumable)]
 enum Lang {
     EN,
     JA,
