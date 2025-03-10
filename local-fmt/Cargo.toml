@@ -28,6 +28,7 @@ local-fmt-macros = { version = "^0", path = "../local-fmt-macros", optional = tr
 [dev-dependencies]
 serde = { version = "1.0", features = ["derive"] }
 toml = "0.8"
+trybuild = { version = "1.0" }
 
 [lib]
 name = "local_fmt"

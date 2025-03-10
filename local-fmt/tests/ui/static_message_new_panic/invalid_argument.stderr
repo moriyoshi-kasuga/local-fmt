@@ -1,0 +1,9 @@
+error[E0080]: evaluation of constant value failed
+ --> tests/ui/static_message_new_panic/invalid_argument.rs:3:29
+  |
+3 |   const _: StaticMessage<1> = StaticMessage::<1>::new_panic(&[
+  |  _____________________________^
+4 | |     RefMessageFormat::RefText("Hello, world! "),
+5 | |     RefMessageFormat::Placeholder(1),
+6 | | ]);
+  | |__^ the evaluated program panicked at 'Invalid argument number: 1 is out of the allowed range (0 <= number < 1).', $DIR/tests/ui/static_message_new_panic/invalid_argument.rs:3:29

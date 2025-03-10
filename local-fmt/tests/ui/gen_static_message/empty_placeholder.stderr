@@ -1,0 +1,5 @@
+error: not found placeholder value in braces
+ --> tests/ui/gen_static_message/empty_placeholder.rs:3:49
+  |
+3 | const _: StaticMessage<1> = gen_static_message!("Hello! {}");
+  |                                                 ^^^^^^^^^^^

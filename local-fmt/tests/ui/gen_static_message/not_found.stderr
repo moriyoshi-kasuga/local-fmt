@@ -1,0 +1,5 @@
+error: Placeholder number 0 is not found in the message. The hiest number found is 1
+ --> tests/ui/gen_static_message/not_found.rs:3:49
+  |
+3 | const _: StaticMessage<1> = gen_static_message!("Hello! {1}");
+  |                                                 ^^^^^^^^^^^^

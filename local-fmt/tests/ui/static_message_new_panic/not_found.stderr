@@ -1,0 +1,5 @@
+error[E0080]: evaluation of constant value failed
+ --> tests/ui/static_message_new_panic/not_found.rs:4:5
+  |
+4 |     StaticMessage::<1>::new_panic(&[RefMessageFormat::RefText("Hello, world! ")]);
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ the evaluated program panicked at 'Missing argument number: 0 is not found within the allowed range (0 <= number < 1).', $DIR/tests/ui/static_message_new_panic/not_found.rs:4:5

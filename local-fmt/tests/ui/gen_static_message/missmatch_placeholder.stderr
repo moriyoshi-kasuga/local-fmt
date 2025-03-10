@@ -1,0 +1,9 @@
+error[E0308]: mismatched types
+ --> tests/ui/gen_static_message/missmatch_placeholder.rs:3:29
+  |
+3 | const _: StaticMessage<1> = gen_static_message!("Hello!");
+  |                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `1`, found `0`
+  |
+  = note: expected struct `RefMessage<'static, 1>`
+             found struct `RefMessage<'_, 0>`
+  = note: this error originates in the macro `gen_static_message` (in Nightly builds, run with -Z macro-backtrace for more info)
