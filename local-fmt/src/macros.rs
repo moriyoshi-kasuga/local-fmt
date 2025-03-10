@@ -1,8 +1,18 @@
 use local_fmt_macros::gen_static_message;
+use sealed::Sealed;
 
 use crate::{panic_builder, StaticMessage};
 
-pub trait CheckStaticMessageArg<To: Sized>: Sized {
+mod sealed {
+    use crate::StaticMessage;
+
+    pub trait Sealed {}
+
+    impl Sealed for &'static str {}
+    impl<const N: usize> Sealed for StaticMessage<N> {}
+}
+
+pub trait CheckStaticMessageArg<To>: Sealed {
     const IS_INVALID: Option<StaticMessage<2>>;
 }
 
@@ -24,7 +34,7 @@ where
     unsafe { std::ptr::read(from as *const From as *const To) }
 }
 
-impl CheckStaticMessageArg<&str> for &str {
+impl CheckStaticMessageArg<&'static str> for &'static str {
     const IS_INVALID: Option<StaticMessage<2>> = None;
 }
 
@@ -40,7 +50,7 @@ impl<const N: usize, const M: usize> CheckStaticMessageArg<StaticMessage<N>> for
     };
 }
 
-impl<const N: usize> CheckStaticMessageArg<&str> for StaticMessage<N> {
+impl<const N: usize> CheckStaticMessageArg<&'static str> for StaticMessage<N> {
     const IS_INVALID: Option<StaticMessage<2>> = Some(gen_static_message!(
         "Error: A message with {u:N} arguments was expected in the language '{0}', ",
         "but received a message with no arguments for the key '{1}'. ",
@@ -48,7 +58,7 @@ impl<const N: usize> CheckStaticMessageArg<&str> for StaticMessage<N> {
     ));
 }
 
-impl<const N: usize> CheckStaticMessageArg<StaticMessage<N>> for &str {
+impl<const N: usize> CheckStaticMessageArg<StaticMessage<N>> for &'static str {
     const IS_INVALID: Option<StaticMessage<2>> = Some(gen_static_message!(
         "Error: A message with {u:N} arguments was expected in the language '{0}', ",
         "but received a message with no arguments for the key '{1}'. ",
