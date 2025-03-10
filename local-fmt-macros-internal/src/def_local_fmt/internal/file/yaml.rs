@@ -1,6 +1,6 @@
 use super::MessageLoader;
 
-pub(crate) struct YamlMessageLoader;
+pub struct YamlMessageLoader;
 
 impl MessageLoader for YamlMessageLoader {
     const EXTENSION: &'static str = "yaml";

@@ -1,30 +1,31 @@
 use proc_macro2::TokenStream;
+use quote::ToTokens;
 use syn::Ident;
 
 use crate::{
-    parse::{MessageToken, MessageTokenValue},
+    parse::{StaticMessage, StaticMessageValue},
     utils::hierarchy::Hierarchy,
 };
 
 use super::MessageField;
 
-pub(crate) struct LangMessage {
+pub struct LangMessage {
     pub lang: String,
     pub messages: Vec<Message>,
 }
 
-pub(crate) struct Message {
+pub struct Message {
     pub key: String,
     pub value: MessageValue,
 }
 
-pub(crate) enum MessageValue {
-    Token(MessageToken),
+pub enum MessageValue {
+    Token(StaticMessage),
     Nested(Vec<Message>),
 }
 
 impl LangMessage {
-    pub(crate) fn to_token(&self, field: &MessageField) -> TokenStream {
+    pub fn to_token(&self, field: &MessageField) -> TokenStream {
         let lang = Ident::new(&self.lang, proc_macro2::Span::call_site());
         let message = self
             .messages
@@ -45,11 +46,11 @@ fn message_token_to_token_stream(
     ident: &Ident,
     lang: &str,
     name: &str,
-    token: &MessageToken,
+    token: &StaticMessage,
 ) -> TokenStream {
     match token.placeholder_max {
         Some(_) => {
-            let value = token.to_static_token_stream();
+            let value = token.to_token_stream();
             quote::quote! {
                 #ident: CheckStaticMessageArg::check(#lang, #name, #value)
             }
@@ -57,11 +58,8 @@ fn message_token_to_token_stream(
         None => {
             let value = token.values.iter().fold(String::new(), |mut acc, v| {
                 match v {
-                    MessageTokenValue::StaticText(v) => acc.push_str(v),
-                    MessageTokenValue::PlaceholderArg(_) => {
-                        unreachable!()
-                    }
-                    MessageTokenValue::PlaceholderIdent(_) => {
+                    StaticMessageValue::StaticText(v) => acc.push_str(v),
+                    _ => {
                         unreachable!()
                     }
                 }

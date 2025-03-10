@@ -1,7 +1,11 @@
+use std::num::IntErrorKind;
+
 use quote::ToTokens;
 use syn::Ident;
 
-use super::MessageValue;
+use super::{MessageToken, MessageValue};
+
+pub type AllocMessage = MessageToken<AllocMessageValue>;
 
 pub enum AllocMessageValue {
     AllocText(String),
@@ -17,6 +21,23 @@ impl MessageValue for AllocMessageValue {
         match self {
             AllocMessageValue::Placeholder(n) => Some(*n),
             _ => None,
+        }
+    }
+
+    fn new_string(s: String) -> Self {
+        Self::AllocText(s)
+    }
+
+    fn new_placeholder_raw(s: &str) -> Result<Self, super::MessageValueError> {
+        let number = s.parse::<usize>();
+        match number {
+            Ok(ok) => Ok(Self::Placeholder(ok)),
+            Err(err) if IntErrorKind::InvalidDigit == *err.kind() => Ok(Self::AllocTextIdent(
+                Ident::new(s, proc_macro2::Span::call_site()),
+            )),
+            Err(err) => {
+                panic!("Invalid placeholder on {{{}}}: {}", s, err);
+            }
         }
     }
 }

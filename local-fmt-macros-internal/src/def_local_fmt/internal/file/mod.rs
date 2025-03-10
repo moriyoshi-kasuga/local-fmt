@@ -3,15 +3,15 @@ use crate::{def_local_fmt::arg::ArgFileType, utils::hierarchy::Hierarchy};
 use super::{arg::MessageValue, ArgPath, LangMessage};
 
 #[cfg(feature = "json")]
-mod json;
+pub mod json;
 
 #[cfg(feature = "toml")]
-mod toml;
+pub mod toml;
 
 #[cfg(feature = "yaml")]
-mod yaml;
+pub mod yaml;
 
-pub(super) fn parse(file_type: ArgFileType, path: ArgPath) -> Vec<LangMessage> {
+pub fn parse(file_type: ArgFileType, path: ArgPath) -> Vec<LangMessage> {
     macro_rules! from_path {
         ($file_type:ident, $path:ident, {$($pattern:pat => ($feature:literal, $mod:ident::$loader:ident),)+}) => {
             use ArgFileType::*;
@@ -24,7 +24,7 @@ pub(super) fn parse(file_type: ArgFileType, path: ArgPath) -> Vec<LangMessage> {
                         }
                         #[cfg(not(feature = $feature))]
                         {
-                            panic!(concat!($feature, " feature is not enabled"))
+                            panic!(concat!($feature, " feature is not enabled failed to parse {:#?} file"), $path)
                         }
                     },
                 )+
@@ -39,7 +39,7 @@ pub(super) fn parse(file_type: ArgFileType, path: ArgPath) -> Vec<LangMessage> {
     } }
 }
 
-pub(super) trait MessageLoader: Sized {
+pub trait MessageLoader: Sized {
     const EXTENSION: &'static str;
 
     type Value;

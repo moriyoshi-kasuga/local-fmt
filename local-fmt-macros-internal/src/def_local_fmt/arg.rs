@@ -72,6 +72,7 @@ impl syn::parse::Parse for ArgFileType {
     }
 }
 
+#[derive(Debug)]
 pub enum ArgPath {
     File(PathBuf),
     Folder(PathBuf),

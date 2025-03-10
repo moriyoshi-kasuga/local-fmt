@@ -1,6 +1,6 @@
 use super::MessageLoader;
 
-pub(crate) struct TomlMessageLoader;
+pub struct TomlMessageLoader;
 
 impl MessageLoader for TomlMessageLoader {
     const EXTENSION: &'static str = "toml";

@@ -1,9 +1,10 @@
 use std::str::FromStr;
 
 use proc_macro2::TokenStream;
+use quote::ToTokens;
 use syn::{parse::Parse, punctuated::Punctuated, spanned::Spanned, LitStr};
 
-use crate::parse::MessageToken;
+use crate::parse::{AllocMessage, StaticMessage};
 
 pub struct Args {
     pub texts: Punctuated<LitStr, syn::Token![,]>,
@@ -23,13 +24,15 @@ impl Args {
             acc.push_str(&lit.value());
             acc
         });
-        let token =
-            MessageToken::from_str(&text).map_err(|v| syn::Error::new(self.texts.span(), v))?;
 
         if is_static {
-            Ok(token.to_static_token_stream())
+            StaticMessage::from_str(&text)
+                .map_err(|v| syn::Error::new(self.texts.span(), v))
+                .map(|v| v.into_token_stream())
         } else {
-            Ok(token.to_alloc_token_stream())
+            AllocMessage::from_str(&text)
+                .map_err(|v| syn::Error::new(self.texts.span(), v))
+                .map(|v| v.into_token_stream())
         }
     }
 }

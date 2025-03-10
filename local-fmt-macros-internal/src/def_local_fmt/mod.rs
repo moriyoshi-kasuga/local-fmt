@@ -1,7 +1,7 @@
 #![allow(clippy::panic)]
 
-mod arg;
-mod internal;
+pub mod arg;
+pub mod internal;
 
 pub use arg::Args;
 use proc_macro2::TokenStream;

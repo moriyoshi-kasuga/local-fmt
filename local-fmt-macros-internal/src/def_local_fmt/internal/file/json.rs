@@ -1,6 +1,6 @@
 use super::MessageLoader;
 
-pub(crate) struct JsonMessageLoader;
+pub struct JsonMessageLoader;
 
 impl MessageLoader for JsonMessageLoader {
     const EXTENSION: &'static str = "json";

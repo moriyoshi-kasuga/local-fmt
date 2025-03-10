@@ -5,13 +5,9 @@ use crate::utils::hierarchy::Hierarchy;
 use super::arg::{ArgFileType, ArgPath, MessageField};
 
 mod arg;
-mod file;
+pub mod file;
 
-pub(crate) fn generate(
-    file_type: ArgFileType,
-    path: ArgPath,
-    message: &MessageField,
-) -> Vec<LangMessage> {
+pub fn generate(file_type: ArgFileType, path: ArgPath, message: &MessageField) -> Vec<LangMessage> {
     let lang_messages = file::parse(file_type, path);
 
     for lang_message in &lang_messages {
