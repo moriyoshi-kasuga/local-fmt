@@ -11,6 +11,10 @@ impl<const N: usize> UtilBufWrapper<N> {
     pub const fn buffer(&self) -> &[u8] {
         self.buffer.split_at(self.total).0
     }
+
+    pub const fn as_str(&self) -> &str {
+        unsafe { std::str::from_utf8_unchecked(self.buffer()) }
+    }
 }
 
 pub const fn const_u128_to_str(n: u128) -> UtilBufWrapper<39> {
@@ -65,8 +69,7 @@ macro_rules! panic_builder {
                     [$($arg)+],
                 )*
             );
-            let message = unsafe { std::str::from_utf8_unchecked(buffer.buffer()) };
-            panic!("{}", message);
+            panic!("{}", buffer.as_str());
         }
     };
 }
