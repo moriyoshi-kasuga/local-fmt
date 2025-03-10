@@ -28,3 +28,6 @@ yaml-rust = { version = "0.10", package = "yaml-rust2", optional = true }
 
 [lints]
 workspace = true
+
+[package.metadata.docs.rs]
+all-features = true

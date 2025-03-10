@@ -34,6 +34,9 @@ trybuild = { version = "1.0" }
 [lib]
 name = "local_fmt"
 
+[package.metadata.docs.rs]
+all-features = true
+
 [lints]
 workspace = true
 
