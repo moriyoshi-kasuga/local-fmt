@@ -104,8 +104,32 @@ impl<'a, const N: usize> RefMessage<'a, N> {
 }
 
 impl<const N: usize> StaticMessage<N> {
+    /// Formats the message with the given arguments.
+    ///
     /// # Safety
     /// Ensure that the total of all characters does not exceed SIZE
+    ///
+    /// # Example
+    /// ```
+    /// use local_fmt::{RefMessageFormat, StaticMessage, utils::UtilBufWrapper};
+    ///
+    /// const MESSAGE: StaticMessage<2> = StaticMessage::new_panic(&[
+    ///    RefMessageFormat::RefText("Hello! "),
+    ///    RefMessageFormat::Placeholder(0),
+    ///    RefMessageFormat::RefText(" World! "),
+    ///    RefMessageFormat::Placeholder(1),
+    ///    RefMessageFormat::RefText("!"),
+    /// ]);
+    ///
+    /// const TEXT: &str = {
+    ///     const BUF: UtilBufWrapper<32> = unsafe {
+    ///         MESSAGE.const_format::<32>(&[b"Beautiful", b"Rust!"])
+    ///     };
+    ///     BUF.as_str()
+    /// };
+    ///
+    /// assert_eq!(TEXT, "Hello! Beautiful World! Rust!!");
+    /// ```
     pub const unsafe fn const_format<const SIZE: usize>(
         &self,
         args: &[&[u8]; N],

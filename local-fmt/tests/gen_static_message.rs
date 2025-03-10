@@ -24,3 +24,19 @@ fn duplicate_arg() {
     let text = MESSAGE.format(&["Beautiful"]);
     assert_eq!(text, "Hello Beautiful World! Beautiful");
 }
+
+#[test]
+fn with_u_number() {
+    const NUM: usize = 123456789;
+    const MESSAGE: StaticMessage<1> = gen_static_message!("Hello! {0} {u:NUM}");
+    let text = MESSAGE.format(&["World!"]);
+    assert_eq!(text, "Hello! World! 123456789");
+}
+
+#[test]
+fn with_i_number() {
+    const NUM: i32 = -123456789;
+    const MESSAGE: StaticMessage<1> = gen_static_message!("Hello! {0} {i:NUM}");
+    let text = MESSAGE.format(&["World!"]);
+    assert_eq!(text, "Hello! World! -123456789");
+}

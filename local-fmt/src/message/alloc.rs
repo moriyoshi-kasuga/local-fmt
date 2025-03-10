@@ -2,6 +2,18 @@ use std::{fmt::Display, str::FromStr};
 
 use super::CreateMessageError;
 
+/// Represents a format for an allocatable message, which can be either text or a placeholder.
+///
+/// # Examples
+///
+/// ```rust
+/// use local_fmt::AllocMessageFormat;
+///
+/// let text_format = AllocMessageFormat::AllocText(String::from("Hello"));
+/// let placeholder_format = AllocMessageFormat::Placeholder(0);
+///
+/// assert_eq!(format!("{}", text_format), "Hello");
+/// assert_eq!(format!("{}", placeholder_format), "{0}");
 #[derive(Debug, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum AllocMessageFormat {
     AllocText(String),
@@ -17,18 +29,68 @@ impl Display for AllocMessageFormat {
     }
 }
 
+/// A message format that can be allocated with a fixed number of placeholders.
+///
+/// # Examples
+///
+/// ```rust
+/// use local_fmt::{AllocMessage, AllocMessageFormat};
+///
+/// let message = AllocMessage::<1>::new(vec![
+///     AllocMessageFormat::AllocText(String::from("Hello, ")),
+///     AllocMessageFormat::Placeholder(0),
+/// ]).unwrap();
+///
+/// let formatted = message.format(&["world"]);
+/// assert_eq!(formatted, "Hello, world");
+/// ```
 #[derive(Debug, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct AllocMessage<const N: usize> {
     format: Vec<AllocMessageFormat>,
 }
 
 impl<const N: usize> AllocMessage<N> {
+    /// Creates a new `AllocMessage` without checking the format.
+    ///
     /// # Safety
     /// The caller must ensure that the format is correct.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use local_fmt::{AllocMessage, AllocMessageFormat};
+    ///
+    /// let message = unsafe {
+    ///     AllocMessage::<1>::new_unchecked(vec![
+    ///         AllocMessageFormat::AllocText(String::from("Hello, ")),
+    ///         AllocMessageFormat::Placeholder(0),
+    ///     ])
+    /// };
+    ///
+    /// let formatted = message.format(&["world"]);
+    /// assert_eq!(formatted, "Hello, world");
+    /// ```
     pub unsafe fn new_unchecked(format: Vec<AllocMessageFormat>) -> Self {
         Self { format }
     }
 
+    /// Creates a new `AllocMessage` with format checking.
+    ///
+    /// Returns an error if the format is invalid, such as missing placeholders.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use local_fmt::{AllocMessage, AllocMessageFormat, CreateMessageError};
+    ///
+    /// let result = AllocMessage::<1>::new(vec![
+    ///     AllocMessageFormat::AllocText(String::from("Hello, ")),
+    ///     AllocMessageFormat::Placeholder(0),
+    /// ]).unwrap();
+    ///
+    /// let formatted = result.format(&["world"]);
+    /// assert_eq!(formatted, "Hello, world");
+    /// ```
     pub fn new(format: Vec<AllocMessageFormat>) -> Result<Self, CreateMessageError> {
         let mut numbers = Vec::new();
 
@@ -66,6 +128,25 @@ impl<const N: usize> AllocMessage<N> {
         }
     }
 
+    /// Formats the message with the provided arguments.
+    ///
+    /// # Arguments
+    ///
+    /// * `args` - A slice of string references to be used as arguments in the placeholders.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use local_fmt::{AllocMessage, AllocMessageFormat};
+    ///
+    /// let message = AllocMessage::<1>::new(vec![
+    ///     AllocMessageFormat::AllocText(String::from("Hello, ")),
+    ///     AllocMessageFormat::Placeholder(0),
+    /// ]).unwrap();
+    ///
+    /// let formatted = message.format(&["world"]);
+    /// assert_eq!(formatted, "Hello, world");
+    /// ```
     pub fn format(&self, args: &[&str; N]) -> String {
         let mut result = String::new();
 

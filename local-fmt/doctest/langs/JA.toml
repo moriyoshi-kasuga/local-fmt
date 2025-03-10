@@ -1,1 +1,4 @@
 hello = "こんにちは、世界！ {0}"
+
+[words]
+ownership = "所有権"

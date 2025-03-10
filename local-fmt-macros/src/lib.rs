@@ -175,6 +175,8 @@ pub fn def_local_fmt(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
 /// - The number of placeholders in the message must match the number of arguments
 ///   specified in the `StaticMessage` type.
 /// - The macro supports using constants within the message string.
+/// - You can include numeric constants directly in the message using the `{u:}` or `{i:}` syntax
+///   for unsigned and signed integers, respectively.
 ///
 /// # Examples
 ///
@@ -187,7 +189,6 @@ pub fn def_local_fmt(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
 ///     let text = MESSAGE.format(&["World!"]);
 ///     assert_eq!(text, "Hello! World!");
 /// }
-///
 ///
 /// // Example with const placeholder
 /// {
@@ -203,8 +204,22 @@ pub fn def_local_fmt(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
 ///     let text = MESSAGE.format(&["Beautiful"]);
 ///     assert_eq!(text, "Beautiful World! Beautiful");
 /// }
-/// ```
 ///
+/// // Example with unsigned number
+/// {
+///     const NUM: usize = 123456789;
+///     const MESSAGE: StaticMessage<1> = gen_static_message!("Hello! {0} {u:NUM}");
+///     let text = MESSAGE.format(&["World!"]);
+///     assert_eq!(text, "Hello! World! 123456789");
+/// }
+///
+/// // Example with signed number
+/// {
+///     const NUM: i32 = -123456789;
+///     const MESSAGE: StaticMessage<1> = gen_static_message!("Hello! {0} {i:NUM}");
+///     let text = MESSAGE.format(&["World!"]);
+///     assert_eq!(text, "Hello! World! -123456789");
+/// }
 #[proc_macro]
 pub fn gen_static_message(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let args = syn::parse_macro_input!(input as local_fmt_macros_internal::util_macro::Args);
