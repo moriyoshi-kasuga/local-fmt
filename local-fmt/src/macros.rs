@@ -6,6 +6,9 @@ pub trait CheckStaticMessageArg<To: Sized>: Sized {
     const IS_INVALID: Option<StaticMessage<2>>;
 }
 
+/// Checks if the message argument is valid.
+/// If the argument is invalid, a panic is raised with a detailed error message.
+/// Otherwise, the argument is returned.
 #[track_caller]
 pub const fn check_static_message_arg<To, From>(
     lang: &'static str,

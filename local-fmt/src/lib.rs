@@ -17,10 +17,11 @@ mod serde;
 
 #[cfg(feature = "macros")]
 #[doc(inline)]
-pub use local_fmt_macros::{def_local_fmt, gen_static_message, gen_alloc_message};
+pub use local_fmt_macros::{def_local_fmt, gen_alloc_message, gen_static_message};
 #[cfg(feature = "macros")]
 pub mod macros;
 
+/// A struct that holds a message and the language it is in.
 pub struct LocalFmt<L: Enumable + Copy, M, const N: usize> {
     messages: EnumTable<L, M, N>,
     lang: fn() -> L,
@@ -31,10 +32,12 @@ impl<L: Enumable + Copy, M, const N: usize> LocalFmt<L, M, N> {
         Self { messages, lang }
     }
 
+    /// Returns the message in the current language.
     pub fn get_message(&self) -> &M {
         self.messages.get(&(self.lang)())
     }
 
+    /// Returns the language.
     pub fn lang(&self) -> L {
         (self.lang)()
     }
@@ -43,6 +46,7 @@ impl<L: Enumable + Copy, M, const N: usize> LocalFmt<L, M, N> {
 impl<L: Enumable + Copy, M, const N: usize> std::ops::Deref for LocalFmt<L, M, N> {
     type Target = M;
 
+    /// Returns the message in the current language.
     fn deref(&self) -> &Self::Target {
         self.get_message()
     }
