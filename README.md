@@ -16,6 +16,9 @@
 
 To customize the functionality of `local-fmt`, you can enable the following features in your `Cargo.toml`:
 
+- **serde**: Enables serialization and deserialization of messages,
+  allowing you to save and load message configurations from various formats.
+  This feature is useful for persistent storage or network transmission of localized messages.
 - **macros**: Includes macros such as `gen_static_message`, `gen_alloc_message`, and `def_local_fmt`.
   If you use `def_local_fmt`, choose one of the following:
   - **macros-toml**: Enables parsing of TOML files.
@@ -26,7 +29,8 @@ To customize the functionality of `local-fmt`, you can enable the following feat
 
 ```toml
 [dependencies]
-enum-table = "0.2" # Required if you use `def_local_fmt` macro or call the `new` function of LocalFmt
+enum-table = "0.2" # Required if you use `def_local_fmt` macro or
+                   # call the `new` function of LocalFmt
 local_fmt = { version = "0.5", features = ["macros", "macros-toml"] }
 ```
 
