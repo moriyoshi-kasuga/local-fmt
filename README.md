@@ -104,7 +104,7 @@ fn main() {
 }
 ```
 
-For more detailed information on `def_local_fmt`, see the [documentation](https://docs.rs/local-fmt/macro.def_local_fmt.html).
+For more detailed information on `def_local_fmt`, see the [documentation](https://docs.rs/local-fmt/latest/local_fmt/macro.def_local_fmt.html).
 
 ## License
 
