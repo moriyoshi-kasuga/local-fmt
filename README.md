@@ -64,16 +64,24 @@ enum Lang {
 }
 
 struct Words {
-    // If there are no placeholders, use &'static str instead of StaticMessage<0>
+    // If there are no placeholders,
+    // use &'static str instead of StaticMessage<0>
     pub ownership: &'static str,
 }
 
 // Nested struct example
 struct Messages {
-    // StaticMessage<Generic>, Generic is usize, representing the number of unique placeholders in the format string.
-    // For example, in the format string "Hello, {0} and {1}", the Generic would be 2 because there are two unique placeholders.
-    // Duplicate placeholders like "Hello, {0} and {0}" would still result in a Generic of 1, as only one unique placeholder is used.
-    // This ensures that the number of arguments provided during formatting matches the number of unique placeholders.
+    // StaticMessage<Generic>, where Generic is usize,
+    // represents the number of unique placeholders in the format string.
+    //
+    // For example, in the format string "Hello, {0} and {1}",
+    // the Generic would be 2 because there are two unique placeholders.
+    //
+    // Duplicate placeholders like "Hello, {0} and {0}" would still result
+    // in a Generic of 1, as only one unique placeholder is used.
+    //
+    // This ensures that the number of arguments provided during formatting
+    // matches the number of unique placeholders.
     pub hello: StaticMessage<1>,
     pub words: Words,
 }
@@ -101,9 +109,14 @@ def_local_fmt!(
 fn main() {
     // Use the `MESSAGES` to create a personalized greeting message.
 
-    // StaticMessage provides a `pub fn format(args: &[&str; Generic])` method, where you pass a slice of arguments.
-    // The length of the slice must match the number of unique placeholders specified by the Generic parameter.
-    // This ensures that each placeholder in the format string is replaced by a corresponding argument.
+    // StaticMessage provides a `pub fn format(args: &[&str; Generic])` method,
+    // where you pass a slice of arguments.
+    //
+    // The length of the slice must match the number of unique placeholders
+    // specified by the Generic parameter.
+    //
+    // This ensures that each placeholder in
+    // the format string is replaced by a corresponding argument.
     assert_eq!(MESSAGES.hello.format(&["Rust"]), "Hello, world! Rust");
     assert_eq!(MESSAGES.words.ownership, "ownership");
 
