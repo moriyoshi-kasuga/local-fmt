@@ -64,7 +64,7 @@ fn message_token_to_token_stream(
         }
     };
     quote::quote! {
-        #ident: check_static_message_arg(#lang, #name, &#value)
+        #ident: check_static_message_arg(#lang, #name, #value)
     }
 }
 

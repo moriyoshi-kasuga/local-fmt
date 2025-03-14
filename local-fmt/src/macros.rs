@@ -23,15 +23,17 @@ pub trait CheckStaticMessageArg<To>: Sealed {
 pub const fn check_static_message_arg<To, From>(
     lang: &'static str,
     key: &'static str,
-    from: &From,
+    from: From,
 ) -> To
 where
     From: CheckStaticMessageArg<To>,
 {
+    use std::mem::ManuallyDrop;
+
     if let Some(message) = From::IS_INVALID {
         panic_builder!(message, [lang], [key]);
     }
-    unsafe { std::ptr::read(from as *const From as *const To) }
+    unsafe { std::mem::transmute_copy::<ManuallyDrop<From>, To>(&ManuallyDrop::new(from)) }
 }
 
 impl CheckStaticMessageArg<&'static str> for &'static str {
