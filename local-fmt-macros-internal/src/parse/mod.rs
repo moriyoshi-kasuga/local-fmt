@@ -10,60 +10,6 @@ pub use alloc::*;
 mod static_ref;
 pub use static_ref::*;
 
-pub enum MessageTokenValue {
-    StaticText(String),
-    PlaceholderArg(usize),
-
-    // in const, it's expected to be a &'static str
-    // in not const, it's expected to be a String
-    PlaceholderIdent(Ident),
-}
-
-impl MessageTokenValue {
-    pub fn to_alloc_token_stream(&self) -> TokenStream {
-        match self {
-            MessageTokenValue::StaticText(s) => {
-                quote::quote! {
-                    local_fmt::AllocMessageFormat::AllocText(#s.to_string()),
-                }
-            }
-            MessageTokenValue::PlaceholderArg(n) => {
-                let n = *n;
-                quote::quote! {
-                    local_fmt::AllocMessageFormat::Placeholder(#n),
-                }
-            }
-            MessageTokenValue::PlaceholderIdent(ident) => {
-                quote::quote! {
-                    local_fmt::AllocMessageFormat::AllocText(#ident),
-                }
-            }
-        }
-    }
-
-    pub fn to_static_token_stream(&self) -> TokenStream {
-        match self {
-            MessageTokenValue::StaticText(s) => {
-                let s = s.as_str();
-                quote::quote! {
-                    local_fmt::RefMessageFormat::RefText(#s),
-                }
-            }
-            MessageTokenValue::PlaceholderArg(n) => {
-                let n = *n;
-                quote::quote! {
-                    local_fmt::RefMessageFormat::Placeholder(#n),
-                }
-            }
-            MessageTokenValue::PlaceholderIdent(ident) => {
-                quote::quote! {
-                    local_fmt::RefMessageFormat::RefText(#ident),
-                }
-            }
-        }
-    }
-}
-
 #[derive(Debug, thiserror::Error)]
 pub enum MessageValueError {
     #[error("Placeholder number {0} is not found in the message. The hiest number found is {1}")]
