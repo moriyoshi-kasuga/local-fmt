@@ -93,13 +93,17 @@ pub const fn const_i128_to_str(n: i128) -> UtilBufWrapper<40> {
 /// A macro for creating a panic message with placeholders for arguments.
 /// The message is formatted with the arguments and then a panic is raised.
 ///
+/// This macro uses the same argument formatting as [`crate::fmt_builder`].
+/// You can specify arguments as string literals, byte slices, or numbers
+/// (both signed and unsigned) using the appropriate format specifiers.
+///
 /// # Example
-/// ```rust
+/// ```rust, compile_fail
 /// use local_fmt::{panic_builder, gen_static_message};
 ///
 /// const _: () = {
 ///     let message = gen_static_message!("Error: {0} {1} {2}");
-///     // panic_builder!(message, ["This"], ["is"], ["a test"]);
+///     panic_builder!(message, ["This"], ["is"], ["a test"]);
 /// };
 /// ```
 /// ```text
@@ -110,7 +114,6 @@ pub const fn const_i128_to_str(n: i128) -> UtilBufWrapper<40> {
 ///   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ the evaluated program panicked at 'Error: This is a test', local-fmt/src/utils.rs:9:5
 ///   |
 /// ```
-///
 #[macro_export]
 macro_rules! panic_builder {
     ($message:ident, $([$($arg:tt)+]),* $(,)?) => {
@@ -132,9 +135,38 @@ macro_rules! panic_builder {
 /// use local_fmt::{fmt_builder, UtilBufWrapper, StaticMessage, gen_static_message};
 ///
 /// const MESSAGE: StaticMessage<1> = gen_static_message!("Hello, {0}!");
-/// const TEXT: &'static str = fmt_builder!(MESSAGE, ["World"]).as_str();
 ///
-/// assert_eq!(TEXT, "Hello, World!");
+/// // Example with string
+/// {
+///     const TEXT: &'static str = fmt_builder!(MESSAGE, ["World"]).as_str();
+///
+///     assert_eq!(TEXT, "Hello, World!");
+/// }
+///
+/// // Example with signed number
+/// {
+///     const TEXT: UtilBufWrapper<1024> = fmt_builder!(MESSAGE, [i; -1234567890i32]);
+///     assert_eq!(TEXT.as_str(), "Hello, -1234567890!");
+/// }
+///
+/// // Example with unsigned number
+/// {
+///    const TEXT: UtilBufWrapper<1024> = fmt_builder!(MESSAGE, [u; 1234567890usize]);
+///    assert_eq!(TEXT.as_str(), "Hello, 1234567890!");
+/// }
+///
+/// // Example with bytes
+/// {
+///     const WORLD: &[u8] = b"World";
+///     const TEXT: UtilBufWrapper<1024> = fmt_builder!(MESSAGE, [b; WORLD]);
+///     assert_eq!(TEXT.as_str(), "Hello, World!");
+/// }
+///
+/// // Example with multiple arguments
+/// const BYTES: &[u8] = b"Bytes";
+/// const THIS_MESSAGE: StaticMessage<4> = gen_static_message!("Hello, {0} {1} {2} {3}!");
+/// const TEXT: UtilBufWrapper<1024> = fmt_builder!(THIS_MESSAGE, ["World"], [u; 1], [i; -2], [b; BYTES]);
+/// assert_eq!(TEXT.as_str(), "Hello, World 1 -2 Bytes!");
 #[macro_export]
 macro_rules! fmt_builder {
     (@ $arg:literal) => {
