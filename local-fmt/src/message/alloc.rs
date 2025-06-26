@@ -160,14 +160,49 @@ impl<const N: usize> AllocMessage<N> {
         result
     }
 
+    /// Returns the number of format elements in this message.
+    ///
+    /// This counts both text segments and placeholders.
+    ///
+    /// # Example
+    /// ```
+    /// use local_fmt::AllocMessage;
+    /// use std::str::FromStr;
+    ///
+    /// let msg = AllocMessage::<2>::from_str("Hello {0}, welcome to {1}!").unwrap();
+    /// assert_eq!(msg.len(), 4); // "Hello ", {0}, ", welcome to ", {1}, "!"
+    /// ```
     pub fn len(&self) -> usize {
         self.format.len()
     }
 
+    /// Returns true if this message has no format elements.
+    ///
+    /// # Example
+    /// ```
+    /// use local_fmt::AllocMessage;
+    ///
+    /// let msg = AllocMessage::<0>::new(vec![]).unwrap();
+    /// assert!(msg.is_empty());
+    /// ```
     pub fn is_empty(&self) -> bool {
         self.format.is_empty()
     }
 
+    /// Returns a reference to the internal format elements.
+    ///
+    /// This provides access to the underlying representation of the message format,
+    /// which consists of text segments and placeholder references.
+    ///
+    /// # Example
+    /// ```
+    /// use local_fmt::{AllocMessage, AllocMessageFormat};
+    /// use std::str::FromStr;
+    ///
+    /// let msg = AllocMessage::<1>::from_str("Hello {0}!").unwrap();
+    /// let formats = msg.formats();
+    /// assert_eq!(formats.len(), 3);
+    /// ```
     pub fn formats(&self) -> &Vec<AllocMessageFormat> {
         &self.format
     }

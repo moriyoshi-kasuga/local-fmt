@@ -12,7 +12,21 @@ mod sealed {
     impl<const N: usize> Sealed for StaticMessage<N> {}
 }
 
+/// Trait for validating static message arguments at compile time.
+/// 
+/// This trait is used internally by the `def_local_fmt` macro to ensure that
+/// message arguments have compatible types. It provides compile-time validation
+/// that prevents type mismatches when defining localized messages.
+/// 
+/// # Implementation Details
+/// 
+/// The trait uses an associated constant `IS_INVALID` to signal validation errors.
+/// When `IS_INVALID` is `Some`, it contains an error message that will be displayed
+/// at compile time. When it's `None`, the type conversion is valid.
+/// 
+/// This trait is sealed and cannot be implemented outside of this crate.
 pub trait CheckStaticMessageArg<To>: Sealed {
+    /// Contains an error message if the type conversion is invalid, or None if valid.
     const IS_INVALID: Option<StaticMessage<2>>;
 }
 

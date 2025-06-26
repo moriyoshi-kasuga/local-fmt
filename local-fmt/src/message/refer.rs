@@ -90,14 +90,53 @@ impl<'a, const N: usize> RefMessage<'a, N> {
         result
     }
 
+    /// Returns the number of format elements in this message.
+    /// 
+    /// This counts both text segments and placeholders.
+    /// 
+    /// # Example
+    /// ```
+    /// use local_fmt::{RefMessageFormat, RefMessage};
+    /// 
+    /// const MSG: RefMessage<'static, 1> = RefMessage::new_panic(&[
+    ///     RefMessageFormat::RefText("Hello "),
+    ///     RefMessageFormat::Placeholder(0),
+    ///     RefMessageFormat::RefText("!"),
+    /// ]);
+    /// assert_eq!(MSG.len(), 3);
+    /// ```
     pub const fn len(&self) -> usize {
         self.formats.len()
     }
 
+    /// Returns true if this message has no format elements.
+    /// 
+    /// # Example
+    /// ```
+    /// use local_fmt::RefMessage;
+    /// 
+    /// const MSG: RefMessage<'static, 0> = RefMessage::new_panic(&[]);
+    /// assert!(MSG.is_empty());
+    /// ```
     pub const fn is_empty(&self) -> bool {
         self.formats.is_empty()
     }
 
+    /// Returns a reference to the internal format elements.
+    /// 
+    /// This provides access to the underlying representation of the message format,
+    /// which consists of text segments, placeholders, and numeric constants.
+    /// 
+    /// # Example
+    /// ```
+    /// use local_fmt::{RefMessageFormat, RefMessage};
+    /// 
+    /// const MSG: RefMessage<'static, 1> = RefMessage::new_panic(&[
+    ///     RefMessageFormat::RefText("Count: "),
+    ///     RefMessageFormat::Placeholder(0),
+    /// ]);
+    /// assert_eq!(MSG.formats().len(), 2);
+    /// ```
     pub const fn formats(&self) -> &'a [RefMessageFormat<'a>] {
         self.formats
     }
