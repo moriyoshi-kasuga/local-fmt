@@ -6,4 +6,4 @@ error[E0080]: evaluation of constant value failed
 4 | |     RefMessageFormat::RefText("Hello, world! "),
 5 | |     RefMessageFormat::Placeholder(1),
 6 | | ]);
-  | |__^ the evaluated program panicked at 'Invalid argument number: 1 is out of the allowed range (0 <= number < 1).', $DIR/tests/ui/static_message_new_panic/invalid_argument.rs:3:29
+  | |__^ evaluation panicked: Invalid argument number: 1 is out of the allowed range (0 <= number < 1).

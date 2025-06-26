@@ -29,7 +29,7 @@ To customize the functionality of `local-fmt`, you can enable the following feat
 
 ```toml
 [dependencies]
-enum-table = "0.2" # Required if you use `def_local_fmt` macro or
+enum-table = "0.4" # Required if you use `def_local_fmt` macro or
                    # call the `new` function of LocalFmt
 local_fmt = { version = "0.5", features = ["macros", "macros-toml"] }
 ```

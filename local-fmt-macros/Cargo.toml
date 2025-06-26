@@ -34,7 +34,7 @@ local-fmt = { path = "../local-fmt", features = [
     "macros-toml",
     "macros-json",
 ] }
-enum-table = "0.2"
+enum-table = "0.4"
 
 [lints]
 workspace = true

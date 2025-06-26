@@ -23,7 +23,7 @@ serde = ["dep:serde"]
 serde = { version = "1.0", optional = true }
 
 thiserror.workspace = true
-enum-table = "0.2"
+enum-table = "0.4"
 local-fmt-macros = { version = "^0", path = "../local-fmt-macros", optional = true }
 
 [dev-dependencies]
