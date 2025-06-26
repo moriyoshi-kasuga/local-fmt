@@ -107,6 +107,13 @@ impl<const N: usize> StaticMessage<N> {
     /// Formats the message with the given arguments.
     ///
     /// # Safety
+    /// The SIZE parameter must be large enough to hold the entire formatted string.
+    /// If the buffer is too small, this function will panic with an array bounds error.
+    /// To estimate required size:
+    /// - Calculate the total length of all text segments
+    /// - Add the total length of all argument strings
+    /// - Add some extra space for safety margin
+    ///
     /// Ensure that the total of all characters does not exceed SIZE
     ///
     /// # Example
@@ -144,6 +151,10 @@ impl<const N: usize> StaticMessage<N> {
                     match $bytes {
                         bytes => {
                             let len = bytes.len();
+                            // Check if we have enough buffer space
+                            if total + len > SIZE {
+                                panic!("Buffer too small for const_format. Increase SIZE parameter or reduce message length.");
+                            }
                             let mut j = 0;
                             while j < len {
                                 buf[total] = bytes[j];

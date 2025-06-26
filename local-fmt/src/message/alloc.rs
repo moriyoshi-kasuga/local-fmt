@@ -218,8 +218,23 @@ impl<const N: usize> FromStr for AllocMessage<N> {
                                 }
                                 b'0'..=b'9' => {
                                     let mut num = number.unwrap_or(0);
+                                    // Check for potential overflow before multiplication
+                                    if num > usize::MAX / 10 {
+                                        return Err(CreateMessageError::InvalidNumber {
+                                            number: num,
+                                            n: N,
+                                        });
+                                    }
                                     num *= 10;
-                                    num += (byte - b'0') as usize;
+                                    let digit = (byte - b'0') as usize;
+                                    // Check for potential overflow before addition
+                                    if num > usize::MAX - digit {
+                                        return Err(CreateMessageError::InvalidNumber {
+                                            number: num,
+                                            n: N,
+                                        });
+                                    }
+                                    num += digit;
                                     number = Some(num);
                                 }
                                 _ => match number {
