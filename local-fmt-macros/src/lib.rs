@@ -10,7 +10,7 @@
 /// * `lang` - The enumeration representing the supported languages.
 /// * `message` - The struct containing the constant messages.
 /// * `supplier` - The language supplier, a function of type `fn() -> Lang`.
-///     It determines how the current language is selected dynamically at runtime.
+/// It determines how the current language is selected dynamically at runtime.
 /// * `def location` - Specifies the location of the language definition files. This can be either:
 ///     * `lang_file` - The path to a single language definition file.
 ///     * `lang_folder` - The folder containing multiple language definition files, one for each language.
