@@ -120,7 +120,7 @@ impl syn::parse::Parse for Args {
         let crate_root = {
             #[allow(clippy::panic)]
             let crate_root = std::env::var("CARGO_MANIFEST_DIR")
-                .unwrap_or_else(|_| panic!("failed to get CARGO_MANIFEST_DIR"));
+                .unwrap_or_else(|e| panic!("failed to get CARGO_MANIFEST_DIR: {}. This environment variable should be set by Cargo during build.", e));
             PathBuf::from(crate_root)
         };
 

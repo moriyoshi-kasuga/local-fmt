@@ -75,7 +75,7 @@ pub trait MessageLoader: Sized {
         }
 
         let content = std::fs::read_to_string(&file)
-            .unwrap_or_else(|_| panic!("failed to read {}", file.display()));
+            .unwrap_or_else(|e| panic!("failed to read {}: {}", file.display(), e));
 
         let value = Self::value_from_str(&content).unwrap_or_else(|e| {
             panic!(
@@ -112,16 +112,17 @@ pub trait MessageLoader: Sized {
     }
 
     fn from_folder(folder: std::path::PathBuf) -> Vec<LangMessage> {
-        let files = folder.read_dir().unwrap_or_else(|_| {
+        let files = folder.read_dir().unwrap_or_else(|e| {
             panic!(
-                "Failed to read directory entry in folder: {}",
-                folder.display()
+                "Failed to read directory entry in folder {}: {}",
+                folder.display(),
+                e
             )
         });
         let mut lang_messages = Vec::new();
         for entry in files {
             let entry =
-                entry.unwrap_or_else(|_| panic!("failed to read entry in {}", folder.display()));
+                entry.unwrap_or_else(|e| panic!("failed to read entry in {}: {}", folder.display(), e));
             let path = entry.path();
             let exn = path.extension().unwrap_or_else(|| {
                 panic!(
@@ -138,7 +139,7 @@ pub trait MessageLoader: Sized {
                 .to_string_lossy();
 
             let content = std::fs::read_to_string(&path)
-                .unwrap_or_else(|_| panic!("failed to read {}", path.display()));
+                .unwrap_or_else(|e| panic!("failed to read {}: {}", path.display(), e));
             let value = Self::value_from_str(&content).unwrap_or_else(|e| {
                 panic!(
                     "failed to parse {} in {}: {}",
