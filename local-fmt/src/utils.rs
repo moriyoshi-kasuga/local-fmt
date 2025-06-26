@@ -19,7 +19,17 @@ impl<const N: usize> UtilBufWrapper<N> {
     }
 
     /// Returns the buffer as a str.
+    /// 
+    /// # Safety
+    /// This function assumes that the buffer contains valid UTF-8 bytes.
+    /// This is safe because:
+    /// 1. The buffer is initialized with ASCII digits and '-' character only
+    /// 2. All operations that modify the buffer (const_u128_to_str, const_i128_to_str)
+    ///    only write ASCII characters (0-9, '-')
+    /// 3. ASCII is a subset of UTF-8, so ASCII bytes are always valid UTF-8
     pub const fn as_str(&self) -> &str {
+        // SAFETY: Buffer only contains ASCII digits and '-' character,
+        // which are always valid UTF-8
         unsafe { std::str::from_utf8_unchecked(self.buffer()) }
     }
 }

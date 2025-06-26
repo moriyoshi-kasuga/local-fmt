@@ -19,6 +19,11 @@ pub trait CheckStaticMessageArg<To>: Sealed {
 /// Checks if the message argument is valid.
 /// If the argument is invalid, a panic is raised with a detailed error message.
 /// Otherwise, the argument is returned.
+/// 
+/// # Safety
+/// This function uses unsafe transmute operations, but only after compile-time validation
+/// that ensures the From and To types are compatible. The CheckStaticMessageArg trait
+/// provides compile-time guarantees about type compatibility.
 #[track_caller]
 pub const fn check_static_message_arg<To, From>(
     lang: &'static str,
@@ -28,12 +33,24 @@ pub const fn check_static_message_arg<To, From>(
 where
     From: CheckStaticMessageArg<To>,
 {
-    use std::mem::ManuallyDrop;
-
     if let Some(message) = From::IS_INVALID {
         panic_builder!(message, [lang], [key]);
     }
-    unsafe { std::mem::transmute_copy::<ManuallyDrop<From>, To>(&ManuallyDrop::new(from)) }
+    
+    // SAFETY: The CheckStaticMessageArg trait ensures that From and To types
+    // are compatible for this conversion. The trait implementation validates
+    // that the size and layout requirements are met at compile time.
+    // 
+    // For the specific cases implemented:
+    // - &'static str -> &'static str: identity conversion, always safe
+    // - StaticMessage<N> -> StaticMessage<M> where N == M: same type, safe
+    // 
+    // The ManuallyDrop wrapper prevents double-drops while preserving the
+    // memory layout for the transmute operation.
+    unsafe { 
+        use std::mem::{ManuallyDrop, transmute_copy};
+        transmute_copy::<ManuallyDrop<From>, To>(&ManuallyDrop::new(from))
+    }
 }
 
 impl CheckStaticMessageArg<&'static str> for &'static str {

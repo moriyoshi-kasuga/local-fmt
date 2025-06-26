@@ -196,6 +196,8 @@ impl<const N: usize> FromStr for AllocMessage<N> {
             match byte {
                 b'{' => {
                     if !buffer.is_empty() {
+                        // SAFETY: buffer only contains UTF-8 bytes from the original input string
+                        // which was already validated to be valid UTF-8 when converted from &str
                         formats.push(AllocMessageFormat::AllocText(unsafe {
                             String::from_utf8_unchecked(std::mem::take(&mut buffer))
                         }));
@@ -256,6 +258,8 @@ impl<const N: usize> FromStr for AllocMessage<N> {
         }
 
         if !buffer.is_empty() {
+            // SAFETY: buffer only contains UTF-8 bytes from the original input string
+            // which was already validated to be valid UTF-8 when converted from &str
             formats.push(AllocMessageFormat::AllocText(unsafe {
                 String::from_utf8_unchecked(buffer)
             }));
